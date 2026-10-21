@@ -1,0 +1,35 @@
+name: Restore deployable website on main
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/restore-main.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Checkout original Icebreakerlab site
+        run: git clone --depth 1 --branch main https://github.com/carolinacontech/icebreakerlab.git /tmp/icebreakerlab-source
+      - name: Import original working Next.js website
+        run: |
+          rsync -a /tmp/icebreakerlab-source/ ./ \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="README.md"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Website already in main"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "fix(deploy): restore Next.js website to main for Vercel production"
+          git push origin HEAD:main

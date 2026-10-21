@@ -1,23 +1,28 @@
-# Icebreakerlab
+# Icebreakerlab — 3D hero redesign
 
-Repositorio de desarrollo del sitio web de Icebreakerlab (Next.js 16 / React 19).
+Sitio Next.js 16 / React 19. Diseño del hero híbrido con iceberg tridimensional, previews de NODO Academy y Market Open Media, y animaciones con Framer Motion.
 
-## Estructura de trabajo
-- **`main`**: rama reservada para la versión aprobada.
-- **`develop`**: código completo de la web original importado de `carolinacontech/icebreakerlab` y documentación para el rediseño del hero.
-- **Pull request en borrador**: revisión antes de incorporar cualquier cambio en `main`.
+## Ramas
 
-## Ejecutar localmente
+- `main`: versión principal sin modificaciones de la nueva web.
+- `develop`: versión original importada del repositorio anterior, además del hero 3D y su código.
+- Pull Request #1 (borrador): https://github.com/carolinacontech/icebreakerlab2/pull/1
+
+## Desarrollo local
+
 ```bash
 npm install
 npm run dev
 ```
-Abre http://localhost:3000.
 
-## Próxima iteración — hero 3D
-Se implementará el concepto híbrido (iceberg + tarjetas reales de portfolio) y la integración del modelo GLB proporcionado, después de optimizarlo. El código del hero generado previamente en ZIP **todavía no está importado en esta rama**.
+Visita http://localhost:3000. El diseño y las tarjetas flotantes se cargan aun sin el archivo GLB; en ese caso se muestra una ilustración de respaldo.
 
-Consulta [HERO-REDESIGN.md](HERO-REDESIGN.md) y [ICEBERG-3D.md](ICEBERG-3D.md).
+## Modelo GLB necesario
 
-## Política de cambios
-No publicar cambios en `main` hasta comprobar compilación, responsive, accesibilidad, tamaño de assets y comportamiento de WebGL.
+El componente `src/components/IcebergGLB.tsx` descarga **`public/models/iceberg-web.glb`**. El archivo real optimizado pesa 16,65 MB y está incluido en el ZIP completo entregado en ChatGPT. **Este binario aún NO se ha subido a GitHub** porque el conector de escritura no permite transferir directamente el archivo local. Debe incorporarse a `public/models/` en la rama `develop` (por ejemplo mediante GitHub Upload files). Consulta [public/models/README.md](public/models/README.md).
+
+El script para reproducir la compresión a partir del GLB original está en `scripts/optimize-iceberg.py`.
+
+## Verificaciones
+
+GitHub Actions ejecuta `npm ci`, `npx tsc --noEmit` y `npm run build`. Antes de fusionar con `main`, comprobar el modelo en navegador, métricas de carga, móviles y accesibilidad.

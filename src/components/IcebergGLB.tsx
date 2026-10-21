@@ -7,7 +7,7 @@ type G={accessors:A[];bufferViews:V[];meshes:{primitives:{attributes:Record<stri
 const VS=`#version 300 es
 precision highp float;
 in vec3 aPosition;in vec3 aNormal;in vec2 aUV;
-uniform float uYaw,uPitch,uTime,uScroll,uAspect;uniform vec3 uCenter;
+uniform float uYaw,uPitch,uTime,uScroll,uAspect,uFracture;uniform vec3 uCenter,uShard;
 out vec3 vNormal,vEye,vWorld;out vec2 vUV;
 void main(){
  vec3 p=aPosition-uCenter;vec3 n=aNormal;
@@ -16,7 +16,11 @@ void main(){
  mat3 ry=mat3(cy,0.,-sy,0.,1.,0.,sy,0.,cy);
  mat3 rx=mat3(1.,0.,0.,0.,cx,sx,0.,-sx,cx);
  mat3 rot=rx*ry;
- p=rot*p*3.05;p.y+=sin(uTime*.65)*.055-uScroll*.16;p.z-=5.2;
+ p=rot*p*3.05;
+ // Each spatial region is rendered from a separate index range: genuine 3D shards.
+ vec3 displace=rot*uShard;
+ p+=displace*uFracture;
+ p.y+=sin(uTime*.65)*.055-uScroll*.16;p.z-=5.2;
  vNormal=normalize(rot*n);vEye=normalize(-p);vWorld=p;vUV=aUV;
  float f=2.35;gl_Position=vec4(p.x*f/uAspect,p.y*f,-1.004*p.z-.2004,-p.z);
 }`;
@@ -55,8 +59,10 @@ function parse(data:ArrayBuffer):{json:G;bin:ArrayBuffer}{
  if(type===0x004e4942)bin=data.slice(pos,pos+size);pos+=size;}
  if(!json||!bin)throw Error("Incomplete GLB");return {json,bin};
 }
-export default function IcebergGLB({motion}:{motion:React.RefObject<SceneMotion>}){
+export default function IcebergGLB({motion,fracture=0}:{motion:React.RefObject<SceneMotion>;fracture?:number}){
  const ref=useRef<HTMLCanvasElement>(null);
+ const fractureRef=useRef(fracture);
+ useEffect(()=>{fractureRef.current=fracture;},[fracture]);
  const [ready,setReady]=useState(false);
  useEffect(()=>{
   const canvas=ref.current;if(!canvas)return;
@@ -94,7 +100,39 @@ export default function IcebergGLB({motion}:{motion:React.RefObject<SceneMotion>
     const a=json.accessors[primitive.indices],v=json.bufferViews[a.bufferView],index=gl.createBuffer();
     if(!index)throw Error("Index buffer allocation failed");resources.push(index);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,index);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint8Array(bin,(v.byteOffset||0)+(a.byteOffset||0),v.byteLength-(a.byteOffset||0)),gl.STATIC_DRAW);
+    // Group triangles by angular sector and height band. Each group can separate
+    // without altering the original textured vertices or drawing fake cracks.
+    const vertexAccessor=json.accessors[primitive.attributes.POSITION];
+    const verticesView=json.bufferViews[vertexAccessor.bufferView];
+    const vertices=new Float32Array(bin,(verticesView.byteOffset||0)+(vertexAccessor.byteOffset||0),vertexAccessor.count*3);
+    const indices=new Uint32Array(bin,(v.byteOffset||0)+(a.byteOffset||0),a.count);
+    const shardCount=32;
+    const groups:Array<number[]>=Array.from({length:shardCount},()=>[]);
+    const boundsMin=vertexAccessor.min||[-.475,-.489,-.981];
+    const boundsMax=vertexAccessor.max||[.465,.46,0];
+    const centerX=(boundsMin[0]+boundsMax[0])/2,centerY=(boundsMin[1]+boundsMax[1])/2;
+    for(let i=0;i<indices.length;i+=3){
+      const i0=indices[i]*3,i1=indices[i+1]*3,i2=indices[i+2]*3;
+      const x=(vertices[i0]+vertices[i1]+vertices[i2])/3-centerX;
+      const z=(vertices[i0+1]+vertices[i1+1]+vertices[i2+1])/3-centerY;
+      const height=-(vertices[i0+2]+vertices[i1+2]+vertices[i2+2])/3;
+      const angle=(Math.atan2(z,x)+Math.PI)/(Math.PI*2);
+      const sector=Math.min(7,Math.floor(angle*8));
+      const band=Math.min(3,Math.max(0,Math.floor(height/.99*4)));
+      groups[band*8+sector].push(indices[i],indices[i+1],indices[i+2]);
+    }
+    const ordered=new Uint32Array(indices.length);
+    const draws:{offset:number;count:number;direction:[number,number,number]}[]=[];
+    let cursor=0;
+    for(let g=0;g<shardCount;g++){
+      const group=groups[g],sector=g%8,band=Math.floor(g/8);
+      ordered.set(group,cursor);
+      const angle=(sector+.5)*Math.PI/4-Math.PI;
+      const mag=.55+(band%2)*.17;
+      draws.push({offset:cursor*4,count:group.length,direction:[Math.cos(angle)*mag,(band-1.5)*.31,Math.sin(angle)*mag]});
+      cursor+=group.length;
+    }
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,ordered,gl.STATIC_DRAW);
     const material=json.materials[0];
     const texIds=[material.pbrMetallicRoughness?.baseColorTexture?.index,material.normalTexture?.index];
     for(let unit=0;unit<2;unit++){
@@ -126,7 +164,8 @@ export default function IcebergGLB({motion}:{motion:React.RefObject<SceneMotion>
     resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);resize();
     visibilityObserver=new IntersectionObserver(entries=>{visible=!!entries[0]?.isIntersecting;});
     visibilityObserver.observe(canvas);
-    let prev=0,rotation=.32,tilt=-.08;
+    let prev=0,rotation=.32,tilt=-.08,breakValue=0;
+    const shardUniform=uniform("uShard"),fractureUniform=uniform("uFracture");
     const draw=(ms:number)=>{
       if(disposed)return;raf=requestAnimationFrame(draw);
       if(!visible||document.hidden||ms-prev<30)return;prev=ms;
@@ -137,7 +176,13 @@ export default function IcebergGLB({motion}:{motion:React.RefObject<SceneMotion>
       gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);
       gl.uniform1f(yaw,rotation);gl.uniform1f(pitch,tilt);
       gl.uniform1f(time,ms/1000);gl.uniform1f(scroll,p.scroll);
-      gl.drawElements(gl.TRIANGLES,a.count,a.componentType,0);
+      const target=[0,.17,.52,2.5][fractureRef.current]??0;
+      breakValue+=(target-breakValue)*.085;
+      gl.uniform1f(fractureUniform,breakValue);
+      for(const shard of draws){
+        gl.uniform3fv(shardUniform,shard.direction);
+        gl.drawElements(gl.TRIANGLES,shard.count,gl.UNSIGNED_INT,shard.offset);
+      }
     };
     setReady(true);raf=requestAnimationFrame(draw);
    }catch(error){if(!disposed)console.warn("3D iceberg fallback",error);}

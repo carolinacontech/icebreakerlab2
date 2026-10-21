@@ -12,4 +12,4 @@ Modelo GLB facilitado para el rediseño del hero. El original ronda los 52 MB y 
 - Comprobar visibilidad y velocidad en mobile; respetar reduced motion.
 
 ## Estado
-La optimización local y la integración definitiva del archivo GLB aún no están publicadas aquí. No confundir el WebGL procedimental anterior con el GLB proporcionado.
+El repositorio `develop` ya contiene el sitio original. El archivo GLB optimizado y su nueva integración en el hero **todavía no están publicados en GitHub**. No confundir el WebGL procedimental anterior con el GLB proporcionado.

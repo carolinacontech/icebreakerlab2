@@ -4,7 +4,7 @@ export type SceneMotion={x:number;y:number;scroll:number};
 type A={bufferView:number;byteOffset?:number;componentType:number;count:number;type:string;normalized?:boolean;min?:number[];max?:number[]};
 type V={byteOffset?:number;byteLength:number};
 type G={accessors:A[];bufferViews:V[];meshes:{primitives:{attributes:Record<string,number>;indices:number}[]}[];images:{bufferView:number;mimeType:string}[];textures:{source:number}[];materials:{normalTexture?:{index:number};pbrMetallicRoughness?:{baseColorTexture?:{index:number}}}[]};
-const VS=\`#version 300 es
+const VS=`#version 300 es
 precision highp float;
 in vec3 aPosition;in vec3 aNormal;in vec2 aUV;
 uniform float uYaw,uPitch,uTime,uScroll,uAspect;uniform vec3 uCenter;
@@ -19,8 +19,8 @@ void main(){
  p=rot*p*3.05;p.y+=sin(uTime*.65)*.055-uScroll*.16;p.z-=5.2;
  vNormal=normalize(rot*n);vEye=normalize(-p);vWorld=p;vUV=aUV;
  float f=2.35;gl_Position=vec4(p.x*f/uAspect,p.y*f,-1.004*p.z-.2004,-p.z);
-}\`;
-const FS=\`#version 300 es
+}`;
+const FS=`#version 300 es
 precision highp float;
 in vec3 vNormal,vEye,vWorld;in vec2 vUV;
 uniform sampler2D uAlbedo,uNormalTex;out vec4 fragColor;
@@ -40,7 +40,7 @@ void main(){
  vec3 ice=mix(base,tint,.50)*(.66+key*.48);
  ice+=vec3(.22,.17,.59)*fill*.55+vec3(.36,.76,.84)*rim*.55;
  fragColor=vec4(ice,1.);
-}\`;
+}`;
 function compile(gl:WebGL2RenderingContext,type:number,src:string){
  const sh=gl.createShader(type);if(!sh)throw Error("Shader allocation failed");
  gl.shaderSource(sh,src);gl.compileShader(sh);

@@ -19,4 +19,4 @@ Beneath every beautiful website there’s strategy, structure, SEO, and performa
 CTAs: **Start a Project** y **Explore Our Work**.
 
 ## Estado
-Diseño definido. La implementación Next.js completa y sus imágenes todavía deben importarse a este repositorio.
+El código original de Next.js y sus assets ya están importados en la rama `develop`. **El hero híbrido de las versiones ZIP todavía no se incorporó a GitHub.**

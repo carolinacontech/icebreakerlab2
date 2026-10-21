@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import ScrollVideo from "@/components/ScrollVideo";
+import HybridHero from "@/components/HybridHero";
 import MarqueeStrip from "@/components/MarqueeStrip";
 import StatsStrip from "@/components/StatsStrip";
 import Services from "@/components/Services";
@@ -26,7 +26,7 @@ export default function Home() {
       />
       <Cursor />
       <Navbar />
-      <ScrollVideo />
+      <HybridHero />
       <MarqueeStrip />
       <StatsStrip />
       <Services />

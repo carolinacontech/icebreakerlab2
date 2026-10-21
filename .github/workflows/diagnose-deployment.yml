@@ -1,0 +1,50 @@
+name: Diagnose production deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-deployment.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Production build
+        run: npm run build
+      - name: Check public Vercel URL
+        shell: bash
+        run: |
+          set +e
+          curl --silent --show-error --location --max-time 25 --output /tmp/icebreaker-response.html --dump-header /tmp/icebreaker-headers.txt https://icebreakerlab2.vercel.app/
+          rc=$?
+          echo "curl exit code: $rc"
+          echo "HTTP response headers:"
+          head -n 25 /tmp/icebreaker-headers.txt || true
+          echo "HTTP HTML byte count:"
+          wc -c /tmp/icebreaker-response.html || true
+          echo "Page classification:"
+          if grep -qi 'authentication required\|deployment protection\|Vercel Authentication' /tmp/icebreaker-response.html; then
+            echo 'Vercel authentication/deployment protection detected'
+          elif grep -qi '<title>404\|404: NOT_FOUND\|Deployment not found' /tmp/icebreaker-response.html; then
+            echo 'Vercel 404 / deployment not found'
+          elif grep -qi 'We build websites\|We break\|Rompemos el hielo\|icebreaker' /tmp/icebreaker-response.html; then
+            echo 'Icebreaker HTML is being served'
+          else
+            echo 'Unrecognized response body'
+          fi
+          exit 0

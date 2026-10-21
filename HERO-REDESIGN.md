@@ -1,22 +1,21 @@
-# Icebreakerlab — Hero híbrido
+# Hero híbrido — Icebreakerlab
 
-## Dirección visual
-Un hero cinematográfico con un iceberg 3D al centro-derecha, previews reales de websites flotantes y un mensaje claro sobre diseño, SEO y rendimiento.
+## Diseño implementado
 
-## Experiencia
-- Título y CTA legibles a la izquierda.
-- Iceberg que responde suavemente al cursor.
-- Tarjetas con imágenes de proyectos reales.
-- Transición con scroll, sin bloquear acceso al portafolio.
-- Versión móvil simplificada.
-- Preferencia de movimiento reducido respetada.
+El nuevo `HybridHero` sustituye el scroll-video en la página principal. A la izquierda hay tipografía editorial, una breve promesa de valor y CTAs a contacto y portafolio. A la derecha se presenta el iceberg GLB junto a dos browser cards reales (NODO Academy y Market Open Media) y una tarjeta de SEO/performance.
 
-## Copy propuesto
+### Copy
+
 **We build websites that break the ice.**
 
-Beneath every beautiful website there’s strategy, structure, SEO, and performance — built to help your business get found and chosen.
+Beautiful on the surface. Strategic underneath. Websites built to get your business found, remembered, and chosen.
 
-CTAs: **Start a Project** y **Explore Our Work**.
+CTAs: **Start a project** / **Explore our work**.
+
+## Movimiento
+
+Flotación ambiental, parallax de cursor y una transición sutil durante el scroll. En móvil y cuando hay preferencia de movimiento reducido se muestra el fallback sin descargar el GLB.
 
 ## Estado
-El código original de Next.js y sus assets ya están importados en la rama `develop`. **El hero híbrido de las versiones ZIP todavía no se incorporó a GitHub.**
+
+Código del hero implementado en `develop`; dependiente de publicar el archivo GLB optimizado. La compilación TypeScript/Next.js de la rama pasó GitHub Actions. Ver detalles en [ICEBERG-3D.md](ICEBERG-3D.md).

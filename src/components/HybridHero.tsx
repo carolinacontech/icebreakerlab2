@@ -34,6 +34,7 @@ export default function HybridHero(){
   }}
   onPointerLeave={()=>{mx.set(0);my.set(0);coordinates.current.x=0;coordinates.current.y=0;}}>
   <div className="ibh-atmosphere" aria-hidden="true"/>
+  <div className="ibh-fullstage"><IcebergGLB motion={coordinates} fracture={fracture}/></div>
   <div className="ibh-grid">
    <motion.div className="ibh-copy" style={reduced?{}:{y:textY}}>
     <div className="ibh-eyebrow"><span className="ibh-glowdot"/> WEB DESIGN STUDIO <span>·</span> SEO <span>·</span> STRATEGY</div>
@@ -44,7 +45,7 @@ export default function HybridHero(){
    </motion.div>
    <motion.div className="ibh-visual" style={reduced?{}:{y:visualY,rotateX:rx,rotateY:ry}}>
     <div className="ibh-halo" aria-hidden="true"/>
-    <button type="button" className={"ibh-model ibh-ice-button ibh-fracture-"+fracture} onClick={fracture===3?()=>setFracture(0):shatter} aria-label={fracture===3?"Rebuild the iceberg":"Break the iceberg, stage "+(fracture+1)+" of 3"}><IcebergGLB motion={coordinates} fracture={fracture}/></button>
+    <button type="button" className={"ibh-model ibh-ice-button ibh-fracture-"+fracture} onClick={fracture===3?()=>setFracture(0):shatter} aria-label={fracture===3?"Rebuild the iceberg":"Break the iceberg, stage "+(fracture+1)+" of 3"}><span className="ibh-mobile-ice" aria-hidden="true"/></button>
     <div className="ibh-ice-hint" aria-live="polite">
       <span className="ibh-ice-count">0{fracture} / 03</span>
       <span>{fracture===0?"CLICK THE ICEBERG TO BREAK THE ICE":fracture===1?"THE FIRST CRACK — CLICK AGAIN":fracture===2?"IT'S BREAKING — ONE MORE CLICK":"THE ICE IS BROKEN"}</span>

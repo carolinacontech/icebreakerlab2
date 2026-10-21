@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  --night: #0a0d1f;
+  --midnight: #0a1628;
+  --deep-aurora: #26215C;
+  --aurora: #534AB7;
+  --aurora-light: #AFA9EC;
+  --lavender: #CECBF6;
+  --glacier: #185fa5;
+  --ice-blue: #85b7eb;
+  --aurora-teal: #5DCAA5;
+  --ice-tip: #d8eef9;
+  --snow: #f0f4ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--night);
+  color: var(--snow);
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-weight: 400;
+  overflow-x: hidden;
+}
+
+h1 { font-weight: 700; }
+h2 { font-weight: 600; }
+h3 { font-weight: 600; }
+
+strong, b { font-weight: 500; }
+
+button, [role="button"] { font-weight: 600; }
+
+small, caption, figcaption { font-weight: 400; }
+
+::selection {
+  background: var(--aurora);
+  color: var(--snow);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--night);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--aurora);
+  border-radius: 3px;
+}
+
+/* Marquee */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+.marquee-track {
+  animation: marquee 22s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Typography scale — shared across all sections ── */
+.section-eyebrow {
+  font-size: 0.6875rem;        /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--aurora-teal);
+}
+.section-title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--snow);
+}
+.section-subtitle {
+  font-size: clamp(0.9375rem, 1.5vw, 1.0625rem);
+  line-height: 1.65;
+  color: rgba(175,169,236,0.65);
+}
+
+/* Navbar link hover — CSS transition instead of inline JS */
+.nav-link {
+  color: rgba(175,169,236,0.7);
+  transition: color 0.2s ease;
+}
+.nav-link:hover {
+  color: var(--snow);
+}
+
+/* Hide default cursor site-wide on desktop */
+@media (pointer: fine) {
+  * { cursor: none !important; }
+}
+
+/* Auto-pan mockup images to reveal full-page screenshots */
+@keyframes panMockup {
+  0%, 8%   { object-position: 50% 0%; }
+  42%, 58% { object-position: 50% 100%; }
+  92%, 100% { object-position: 50% 0%; }
+}
+@keyframes panMockupMobile {
+  0%, 8%   { object-position: 50% 0%; }
+  42%, 58% { object-position: 50% 100%; }
+  92%, 100% { object-position: 50% 0%; }
+}
+.mockup-pan {
+  animation: panMockup 12s ease-in-out infinite;
+}
+.mockup-pan-mobile {
+  animation: panMockupMobile 10s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mockup-pan,
+  .mockup-pan-mobile {
+    animation: none;
+    object-position: 50% 0%;
+  }
+}

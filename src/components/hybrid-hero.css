@@ -40,3 +40,16 @@
 @media(max-width:760px){.ibh{min-height:auto;padding:108px 0 75px}.ibh-grid{display:flex;flex-direction:column;align-items:stretch;padding:0 24px}.ibh-copy h1{font-size:clamp(2.7rem,10.7vw,5rem);margin-top:24px;line-height:1.06}.ibh-copy p{font-size:16px}.ibh-buttons{gap:10px}.ibh-button{min-height:49px;padding:0 17px;font-size:12px;gap:11px}.ibh-eyebrow{font-size:9px;gap:7px;padding:9px 11px}.ibh-caption{margin-top:28px;font-size:9px}.ibh-visual{width:min(100%,510px);height:450px;margin:10px auto 0}.ibh-model{left:10%;width:78%}.ibh-primary{right:-1%;top:11%;width:65%;height:180px}.ibh-secondary{left:-5%;bottom:18%;width:52%;height:150px}.ibh-quality{right:0;bottom:12%;padding:9px 11px;gap:7px}.ibh-quality strong{font-size:10px}.ibh-quality small{font-size:9px}.ibh-quality>span:first-child{font-size:18px}.ibh-chrome{height:19px}.ibh-screen{height:calc(100% - 45px)}.ibh-preview-label{height:26px;font-size:8px}.ibh-preview-label small{font-size:7px}.ibh-scroll{bottom:12px}}
 @media(max-width:380px){.ibh-visual{height:360px}.ibh-primary{height:150px}.ibh-secondary{height:125px}.ibh-preview-label small{display:none}}
 @media(prefers-reduced-motion:reduce){.ibh *, .ibh *::before,.ibh *::after{animation:none!important;transition:none!important}}
+
+/* Interactive single-object hero */
+.ibh-visual{height:650px}
+.ibh-model.ibh-ice-button{appearance:none;border:0;padding:0;background:none;cursor:pointer;position:absolute;left:4%;top:0;width:92%;height:93%;display:block;animation:ibh-float 8s ease-in-out infinite;filter:drop-shadow(0 24px 50px rgba(50,145,220,.24))}
+.ibh-ice-button:focus-visible{outline:2px solid #7dece3;outline-offset:4px;border-radius:22px}
+.ibh-ice-button .iceberg-model{pointer-events:none}
+.ibh-ice-button:hover .iceberg-model-canvas{filter:drop-shadow(0 0 40px rgba(112,215,245,.49))}
+.ibh-ice-hint{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:12px;color:#c6d9ec;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.15em;text-align:center}
+.ibh-ice-count{color:#7dece3;border:1px solid rgba(125,236,227,.28);padding:9px 11px;border-radius:100px}
+.ibh-ice-hint button{font:inherit;color:#82e4d7;padding:9px 12px;border:1px solid rgba(125,236,227,.45);border-radius:30px;cursor:pointer;background:rgba(7,11,23,.8)}
+.ibh-ice-hint button:focus-visible{outline:2px solid #7dece3;outline-offset:4px}
+@media(max-width:760px){.ibh-visual{height:450px}.ibh-model.ibh-ice-button{left:7%;width:86%;height:88%}.ibh-ice-hint{bottom:0;font-size:8px;letter-spacing:.07em;gap:6px;white-space:normal;width:100%}}
+@media(prefers-reduced-motion:reduce){.ibh-model.ibh-ice-button{animation:none}}

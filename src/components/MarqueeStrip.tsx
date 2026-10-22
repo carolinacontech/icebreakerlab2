@@ -24,7 +24,7 @@ export default function MarqueeStrip() {
   const row = [...items, ...items, ...items];
   return (
     <div
-      className="relative overflow-hidden py-4"
+      className="relative overflow-hidden py-3 sm:py-4"
       style={{
         borderTop: "1px solid rgba(83,74,183,0.18)",
         borderBottom: "1px solid rgba(83,74,183,0.18)",

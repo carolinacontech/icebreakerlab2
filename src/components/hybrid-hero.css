@@ -129,3 +129,18 @@
 @media(prefers-reduced-motion:reduce){
   .ibh-scene-loading-dot{animation:none}
 }
+
+
+/* Alternating four real project screenshots inside the original two windows. */
+.ibh-reveal-card{isolation:isolate}
+.ibh-card-position{color:#526174;font-size:8px;font-weight:800;letter-spacing:.11em;white-space:nowrap}
+.ibh-card-swap{position:absolute;inset:26px 0 0;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#111c30}
+.ibh-card-swap .ibh-screen{position:relative;display:block;flex:1 1 auto;min-height:0;height:auto!important;overflow:hidden}
+.ibh-card-swap .ibh-preview-label{display:flex;flex:0 0 35px;min-height:35px;width:100%;align-items:center}
+.ibh-card-swap .ibh-preview-label strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ibh-card-swap .ibh-preview-label small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){
+ .ibh-card-swap{top:24px}
+ .ibh-card-swap .ibh-preview-label{flex-basis:31px;min-height:31px}
+ .ibh-card-position{font-size:7px}
+}

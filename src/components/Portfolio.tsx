@@ -199,7 +199,7 @@ export default function Portfolio() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -16 }}
                       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
-                      <Image src={projects[active].mobile} alt={`${projects[active].title} mobile`} fill sizes="88px" className="object-cover mockup-pan-mobile" />
+                      <Image src={projects[active].mobile} alt={`${projects[active].title} mobile`} fill sizes="(max-width:767px) 108px, 88px" className="object-cover mockup-pan-mobile" />
                     </motion.div>
                   </AnimatePresence>
                 </div>

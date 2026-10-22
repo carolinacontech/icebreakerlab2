@@ -14,7 +14,7 @@ export default function Contact() {
   const bgY = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
 
   return (
-    <section id="contact" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="contact" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       <motion.div className="absolute inset-0 z-0" style={{ y: bgY, scale: 1.15 }}>
         <Image src="/images/textures/ice-macro.png" alt="Ice texture" fill className="object-cover object-center" quality={85} />
       </motion.div>
@@ -22,20 +22,20 @@ export default function Contact() {
         background: "linear-gradient(to bottom, rgba(10,13,31,0.92) 0%, rgba(38,33,92,0.75) 50%, rgba(10,13,31,0.92) 100%)"
       }} />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 w-full">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center mb-14">
+          viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center mb-10 sm:mb-14">
           <p className="section-eyebrow mb-4">Let's begin</p>
           <h2 className="section-title mb-4">Break the ice.</h2>
           <p className="text-lg" style={{ color: "var(--ice-blue)" }}>Tell us about your project. We respond within 24 hours.</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-start">
 
           {/* Left column — what happens next */}
           <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.7 }}
-            className="lg:col-span-2 flex flex-col gap-8">
+            className="lg:col-span-2 flex flex-col gap-6 lg:gap-8">
             <div>
               <p className="text-xs tracking-widest uppercase mb-6" style={{ color: "rgba(175,169,236,0.5)" }}>What happens next</p>
               <div className="flex flex-col gap-6">
@@ -64,7 +64,7 @@ export default function Contact() {
           {/* Right column — form */}
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-3 rounded-2xl p-8"
+            className="lg:col-span-3 rounded-2xl p-5 sm:p-8"
             style={{ background: "rgba(10,13,31,0.6)", border: "1px solid rgba(83,74,183,0.3)", backdropFilter: "blur(24px)" }}>
             {sent ? (
               <div className="text-center py-12">

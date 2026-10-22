@@ -18,15 +18,20 @@ const portfolioPairs:ReadonlyArray<ReadonlyArray<Project>>=[
   {name:"EVA Shoes",detail:"BRANDING · WEB EXPERIENCE",src:"/images/portfolio/mockups/eva-shoes.png"}
  ]
 ];
+// A single rotating showcase for phones; the desktop keeps two independent windows.
+const mobileProjects:ReadonlyArray<Project> = [
+ portfolioPairs[0][0],portfolioPairs[1][0],portfolioPairs[0][1],portfolioPairs[1][1]
+];
 
 function RotatingProjectCard({
- projects,position,reveal,prepare,reduced
+ projects,position,reveal,prepare,reduced,mobile=false
 }:{
  projects:ReadonlyArray<Project>;
  position:number;
  reveal:boolean;
  prepare:boolean;
  reduced:boolean;
+ mobile?:boolean;
 }){
  const [active,setActive]=useState(0);
  const [paused,setPaused]=useState(false);
@@ -38,13 +43,13 @@ function RotatingProjectCard({
   const mobile=window.matchMedia("(max-width:760px)").matches;
   const interval=window.setInterval(()=>{
    if(document.visibilityState==="visible")setActive(current=>(current+1)%projects.length);
-  },mobile?(position===0?8500:9800):(position===0?5200:6300));
+  },mobile?7100:(position===0?5200:6300));
   return()=>window.clearInterval(interval);
- },[reveal,paused,reduced,position,projects.length]);
+ },[reveal,paused,reduced,position,projects.length,mobile]);
  const project=projects[active];
  return <motion.a
    href="/portfolio"
-   className={"ibh-preview ibh-reveal-card "+(position===0?"ibh-primary":"ibh-secondary")}
+   className={"ibh-preview ibh-reveal-card "+(position===0?"ibh-primary":"ibh-secondary")+(mobile?" ibh-mobile-preview":"")}
    aria-label={"View "+project.name+" in our portfolio"}
    aria-hidden={!reveal}
    tabIndex={reveal?0:-1}
@@ -92,14 +97,26 @@ function RotatingProjectCard({
 
 function WebsiteReveal({reveal,prepare,reduced}:{reveal:boolean;prepare:boolean;reduced:boolean}){
  return <div className="ibh-reveal-layer" aria-live="off">
-  {portfolioPairs.map((projects,index)=><RotatingProjectCard
-   key={index}
-   projects={projects}
-   position={index}
-   reveal={reveal}
-   prepare={prepare}
-   reduced={reduced}
-  />)}
+  <div className="ibh-reveal-desktop">
+   {portfolioPairs.map((projects,index)=><RotatingProjectCard
+    key={index}
+    projects={projects}
+    position={index}
+    reveal={reveal}
+    prepare={prepare}
+    reduced={reduced}
+   />)}
+  </div>
+  <div className="ibh-reveal-mobile">
+   <RotatingProjectCard
+    projects={mobileProjects}
+    position={0}
+    reveal={reveal}
+    prepare={prepare}
+    reduced={reduced}
+    mobile
+   />
+  </div>
  </div>;
 }
 
@@ -146,7 +163,11 @@ export default function HybridHero(){
     <div className="ibh-eyebrow"><span className="ibh-glowdot"/> WEB DESIGN STUDIO <span>·</span> SEO <span>·</span> STRATEGY</div>
     <motion.h1 initial={reduced?false:{opacity:0,y:25}} animate={{opacity:1,y:0}} transition={{duration:.8}}>We build websites <em>that break the ice.</em></motion.h1>
     <motion.p initial={reduced?false:{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:.75,delay:.18}}>Beautiful on the surface. Strategic underneath. Websites built to get your business found, remembered, and chosen.</motion.p>
-    <div className="ibh-buttons"><a className="ibh-button ibh-button-main" href="#contact">Start a project <span>↗</span></a><a className="ibh-button ibh-button-alt" href="#portfolio">Explore our work <span>→</span></a></div>
+    <div className="ibh-mobile-ice-invite">
+     <span className="ibh-mobile-invite-icon" aria-hidden="true">✳</span>
+     <div><strong>YOUR TURN TO BREAK THE ICE</strong><small>Tap the iceberg three times to discover our work ↓</small></div>
+    </div>
+    <div className="ibh-buttons ibh-buttons-desktop"><a className="ibh-button ibh-button-main" href="#contact">Start a project <span>↗</span></a><a className="ibh-button ibh-button-alt" href="#portfolio">Explore our work <span>→</span></a></div>
     <div className="ibh-caption"><span/> DESIGN-LED. PERFORMANCE-DRIVEN.</div>
    </motion.div>
    <motion.div className="ibh-visual" style={reduced?{}:{y:visualY,rotateX:rx,rotateY:ry}}>
@@ -159,6 +180,17 @@ export default function HybridHero(){
       {fracture===3&&<button type="button" onClick={restart}>REBUILD ↻</button>}
     </div>
    </motion.div>
+   {reveal&&<motion.div
+    className="ibh-mobile-actions"
+    initial={reduced?false:{opacity:0,y:18}}
+    animate={{opacity:1,y:0}}
+    transition={{duration:reduced?0:.6,delay:reduced?0:.16}}
+   >
+    <div className="ibh-buttons">
+     <a className="ibh-button ibh-button-main" href="#contact">Start a project <span>↗</span></a>
+     <a className="ibh-button ibh-button-alt" href="#portfolio">Explore our work <span>→</span></a>
+    </div>
+   </motion.div>}
   </div>
   <a href="#services" className="ibh-scroll"><span/>SCROLL TO EXPLORE</a>
  </section>;

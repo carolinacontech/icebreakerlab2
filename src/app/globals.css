@@ -155,3 +155,13 @@ small, caption, figcaption { font-weight: 400; }
 @media(max-width:380px){
  .portfolio-phone-preview{width:102px;height:217px;}
 }
+
+/* Keep illustration blocks legible without stealing half the phone viewport. */
+@media(max-width:767px){
+ .svc-card-visual{--svc-visual-height:168px}
+}
+/* Buttons and card contents should never create horizontal page overflow. */
+@media(max-width:767px){
+ a,button{touch-action:manipulation}
+ .portfolio-phone-preview{max-width:calc(100% - 24px)}
+}

@@ -72,7 +72,7 @@ in vec3 vNormal, vEye, vWorld, vLocal;
 in vec2 vUv;
 in float vCrack;
 uniform sampler2D uAlbedo, uNormalTex;
-uniform float uBreak, uDamageStage, uTime;
+uniform float uBreak, uDamageStage, uTime, uFade;
 uniform vec3 uImpact;
 out vec4 outColor;
 vec3 tonemap(vec3 color) {
@@ -118,7 +118,7 @@ void main() {
   color += vec3(.32,.79,.95)*pow(fissure,2.)*.35;
   color += vec3(.14,.53,.74)*uBreak*.14;
   color = tonemap(color*1.18);
-  outColor = vec4(pow(clamp(color,0.,1.),vec3(1./2.2)),1.);
+  outColor = vec4(pow(clamp(color,0.,1.),vec3(1./2.2)),uFade);
 }`;
 
 const DUST_VERTEX = `#version 300 es
@@ -149,7 +149,7 @@ void main() {
     -2.*farPlane*nearPlane/(farPlane-nearPlane),-p.z);
   float sizeFactor=uBurstStage<1.5?.46:(uBurstStage<2.5?.68:1.);
   gl_PointSize=clamp((2.6+aSeed*3.1)*sizeFactor*uPixelRatio*5.8/max(-p.z,1.),1.,9.);
-  float life=uBurstStage<1.5?1.15:(uBurstStage<2.5?1.85:3.7);
+  float life=uBurstStage<1.5?1.15:(uBurstStage<2.5?1.85:2.3);
   vOpacity=(uTimeSinceBreak<0.?0.:(1.-smoothstep(life*.38,life,t)))*
     (1.-.55*aSeed)*localFade;
   vSeed=aSeed;
@@ -228,6 +228,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
   const canvasRef=useRef<HTMLCanvasElement>(null);
   const stageRef=useRef(fracture);
   const [ready,setReady]=useState(false);
+  const [loadError,setLoadError]=useState(false);
   useEffect(()=>{stageRef.current=fracture;},[fracture]);
   useEffect(()=>{
     const canvas=canvasRef.current;
@@ -235,7 +236,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
     const mobile=window.matchMedia("(max-width:760px)").matches;
     const prefersReducedMotion=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
     const gl=canvas.getContext("webgl2",{alpha:true,antialias:!mobile,premultipliedAlpha:false,powerPreference:mobile?"low-power":"high-performance"});
-    if(!gl)return;
+    if(!gl){setLoadError(true);return;}
     const abort=new AbortController();
     let disposed=false,raf=0,visible=true,lastStage=0,fractureAmount=0,burstStarted=-1,burstStage=0;
     let resizeObserver:ResizeObserver|undefined,intersectionObserver:IntersectionObserver|undefined;
@@ -243,7 +244,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
     const programs:WebGLProgram[]=[];
     const textures:WebGLTexture[]=[];
     const arrays:WebGLVertexArrayObject[]=[];
-    const lost=(e:Event)=>{e.preventDefault();visible=false;setReady(false);};
+    const lost=(e:Event)=>{e.preventDefault();visible=false;setReady(false);setLoadError(true);};
     canvas.addEventListener("webglcontextlost",lost);
     (async()=>{
       try {
@@ -428,6 +429,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           placementY:loc(iceProgram,"uPlacementY"),modelScale:loc(iceProgram,"uModelScale"),
           shard:loc(iceProgram,"uShard"),pivot:loc(iceProgram,"uPivot"),
           damage:loc(iceProgram,"uDamageStage"),impact:loc(iceProgram,"uImpact"),
+          fade:loc(iceProgram,"uFade"),
           delay:loc(iceProgram,"uShardDelay"),spin:loc(iceProgram,"uShardSpin")
         };
         const ud={
@@ -487,6 +489,10 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           const target=[0,.006,.028,1][stage]??0;
           fractureAmount+=(target-fractureAmount)*.065;
           const flight=stage===3&&burstStarted>=0?Math.min((ms-burstStarted)/1000,2.4):0;
+          // Let the shattered ice fly, then disappear before the portfolio reveal.
+          const fragmentOpacity=stage===3
+            ? 1-(Math.min(1,Math.max(0,(flight-.68)/.92))**2)*(3-2*Math.min(1,Math.max(0,(flight-.68)/.92)))
+            : 1;
           const p=motion.current;
           const orbit=(mobile&&!prefersReducedMotion)?Math.sin(ms*.00032)*.17:0;
           yaw+=(.27+orbit+p.x*.19-yaw)*.065;
@@ -504,9 +510,14 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           gl.uniform1f(ui.placementY,placementY);gl.uniform1f(ui.modelScale,modelScale);
           gl.uniform1f(ui.brk,fractureAmount);gl.uniform1f(ui.flight,flight);
           gl.uniform1f(ui.damage,stage);
+          gl.uniform1f(ui.fade,fragmentOpacity);
           gl.uniform3fv(ui.impact,impact);
+          if(fragmentOpacity<.995){
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+          }
           for(const shard of shards) {
-            if(!shard.count)continue;
+            if(!shard.count||fragmentOpacity<=.005)continue;
             gl.uniform3fv(ui.shard,shard.direction);
             gl.uniform3fv(ui.pivot,shard.pivot);
             gl.uniform1f(ui.delay,shard.delay);
@@ -514,7 +525,8 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
             gl.drawElements(gl.TRIANGLES,shard.count,gl.UNSIGNED_INT,shard.offset);
           }
           gl.bindVertexArray(null);
-          if(burstStarted>=0){
+          gl.disable(gl.BLEND);
+          if(burstStarted>=0 && (ms-burstStarted)<2600){
             gl.useProgram(dustProgram);gl.bindVertexArray(dustVAO);
             gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
             gl.uniform1f(ud.yaw,yaw);gl.uniform1f(ud.aspect,aspect);
@@ -527,10 +539,13 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
             gl.disable(gl.BLEND);gl.depthMask(true);gl.bindVertexArray(null);
           }
         };
-        setReady(true);
         raf=requestAnimationFrame(render);
+        setReady(true);
       }catch(error){
-        if(!disposed&&!abort.signal.aborted)console.warn("Iceberg 3D fallback",error);
+        if(!disposed&&!abort.signal.aborted){
+          console.warn("Iceberg 3D unavailable",error);
+          setLoadError(true);
+        }
       }
     })();
     return()=>{
@@ -547,7 +562,10 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
     <div className="ibh-fullscene" role="img" aria-label="Sculptural iceberg that shatters into flying 3D fragments">
       <canvas ref={canvasRef} aria-hidden="true" className="ibh-fullscene-canvas"
         style={{opacity:ready?1:0}} />
-      {!ready&&<div className="ibh-scene-fallback" aria-hidden="true" />}
+      {!ready&&<div className="ibh-scene-loading" role="status" aria-live="polite">
+        <span className="ibh-scene-loading-dot" aria-hidden="true" />
+        {loadError?"3D experience unavailable":"Loading 3D experience"}
+      </div>}
     </div>
   );
 }

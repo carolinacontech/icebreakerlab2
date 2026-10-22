@@ -25,7 +25,7 @@ in vec3 aNormal;
 in vec2 aUv;
 in float aCrack;
 uniform vec3 uCenter, uShard, uPivot;
-uniform float uYaw, uPitch, uTime, uScroll, uAspect, uBreak, uFlight, uPlacement;
+uniform float uYaw, uPitch, uTime, uScroll, uAspect, uBreak, uFlight, uPlacement, uPlacementY, uModelScale;
 uniform float uShardDelay, uShardSpin;
 out vec3 vNormal, vEye, vWorld, vLocal;
 out vec2 vUv;
@@ -47,11 +47,11 @@ void main() {
   float spin = released * uShardSpin;
   mat3 twist = mat3(cos(spin),0.,-sin(spin), 0.,1.,0., sin(spin),0.,cos(spin));
   q = pivot + twist * (q - pivot);
-  q *= 3.5;
+  q *= uModelScale;
   // Small fractures first; staggered, nonuniform separation only on final impact.
   q += rotation * uShard * (uBreak*.018 + released*2.55 + uFlight*released*.75);
   q.x += uPlacement;
-  q.y += sin(uTime * .57) * .048 - uScroll * .18;
+  q.y += uPlacementY + sin(uTime * .57) * .048 - uScroll * .18;
   q.z -= 5.85;
   vNormal = normalize(rotation * n);
   vEye = normalize(-q);
@@ -125,7 +125,7 @@ const DUST_VERTEX = `#version 300 es
 precision highp float;
 in vec3 aPoint, aSpeed;
 in float aSeed;
-uniform float uYaw, uAspect, uPlacement, uTimeSinceBreak, uPixelRatio, uBurstStage;
+uniform float uYaw, uAspect, uPlacement, uPlacementY, uModelScale, uTimeSinceBreak, uPixelRatio, uBurstStage;
 out float vOpacity,vSeed;
 void main() {
   float t = max(uTimeSinceBreak,0.);
@@ -136,10 +136,11 @@ void main() {
   float localFade = 1.-smoothstep(spread-.09,spread+.09,length(aPoint-impact));
   float angle = uYaw;
   p = vec3(p.x*cos(angle)+p.z*sin(angle),p.y,-p.x*sin(angle)+p.z*cos(angle));
-  p *= 3.5;
+  p *= uModelScale;
   float speed=uBurstStage<1.5?.72:(uBurstStage<2.5?1.45:3.35);
   p += aSpeed*(t*speed) + vec3(0.,-1.,0.)*(t*t*(uBurstStage<2.5?.26:.54));
   p.x += uPlacement;
+  p.y += uPlacementY;
   p.z -= 5.85;
   float f=2.22;
   float nearPlane=.1,farPlane=80.;
@@ -230,8 +231,10 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
   useEffect(()=>{stageRef.current=fracture;},[fracture]);
   useEffect(()=>{
     const canvas=canvasRef.current;
-    if(!canvas || window.matchMedia("(max-width:760px), (prefers-reduced-motion:reduce)").matches) return;
-    const gl=canvas.getContext("webgl2",{alpha:true,antialias:true,premultipliedAlpha:false});
+    if(!canvas) return;
+    const mobile=window.matchMedia("(max-width:760px)").matches;
+    const prefersReducedMotion=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+    const gl=canvas.getContext("webgl2",{alpha:true,antialias:!mobile,premultipliedAlpha:false,powerPreference:mobile?"low-power":"high-performance"});
     if(!gl)return;
     const abort=new AbortController();
     let disposed=false,raf=0,visible=true,lastStage=0,fractureAmount=0,burstStarted=-1,burstStage=0;
@@ -362,7 +365,18 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           const texId=ids[unit];if(texId===undefined)throw Error("Missing texture");
           const img=json.images[json.textures[texId].source],view=json.bufferViews[img.bufferView];
           const offset=view.byteOffset||0;
-          const bitmap=await createImageBitmap(new Blob([binary.slice(offset,offset+view.byteLength)],{type:img.mimeType}));
+          const sourceBitmap=await createImageBitmap(new Blob([binary.slice(offset,offset+view.byteLength)],{type:img.mimeType}));
+          if(disposed){sourceBitmap.close();return;}
+          // Avoid allocating huge 2K/4K GPU textures on phones. The source
+          // model is preserved; mobile uploads downscaled textures only.
+          const maxEdge=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,mobile?1024:2048);
+          const factor=Math.min(1,maxEdge/Math.max(sourceBitmap.width,sourceBitmap.height));
+          const bitmap=factor<1 ? await createImageBitmap(sourceBitmap,{
+            resizeWidth:Math.max(1,Math.round(sourceBitmap.width*factor)),
+            resizeHeight:Math.max(1,Math.round(sourceBitmap.height*factor)),
+            resizeQuality:"high"
+          }):sourceBitmap;
+          if(bitmap!==sourceBitmap)sourceBitmap.close();
           if(disposed){bitmap.close();return;}
           const tex=gl.createTexture();if(!tex)throw Error("Unable to allocate texture");
           textures.push(tex);
@@ -376,7 +390,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           bitmap.close();
         }
         if(disposed)return;
-        const pCount=1800,points=new Float32Array(pCount*3),
+        const pCount=mobile?560:1800,points=new Float32Array(pCount*3),
           speed=new Float32Array(pCount*3),seeds=new Float32Array(pCount);
         for(let i=0;i<pCount;i++){
           const vi=((i*173+79)%position.count)*3,k=i*3;
@@ -407,6 +421,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           scroll:loc(iceProgram,"uScroll"),aspect:loc(iceProgram,"uAspect"),
           brk:loc(iceProgram,"uBreak"),flight:loc(iceProgram,"uFlight"),
           placement:loc(iceProgram,"uPlacement"),
+          placementY:loc(iceProgram,"uPlacementY"),modelScale:loc(iceProgram,"uModelScale"),
           shard:loc(iceProgram,"uShard"),pivot:loc(iceProgram,"uPivot"),
           damage:loc(iceProgram,"uDamageStage"),impact:loc(iceProgram,"uImpact"),
           delay:loc(iceProgram,"uShardDelay"),spin:loc(iceProgram,"uShardSpin")
@@ -414,14 +429,16 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
         const ud={
           yaw:loc(dustProgram,"uYaw"),aspect:loc(dustProgram,"uAspect"),
           placement:loc(dustProgram,"uPlacement"),
+          placementY:loc(dustProgram,"uPlacementY"),modelScale:loc(dustProgram,"uModelScale"),
           time:loc(dustProgram,"uTimeSinceBreak"),
           ratio:loc(dustProgram,"uPixelRatio"),
           stage:loc(dustProgram,"uBurstStage")
         };
-        let aspect=1,ratio=1;
+        let aspect=1,ratio=1,modelScale=3.5,placementX=0,placementY=0;
+        const visual=canvas.closest(".ibh")?.querySelector<HTMLElement>(".ibh-visual");
         const resize=()=>{
           const rect=canvas.getBoundingClientRect();
-          ratio=Math.min(window.devicePixelRatio||1,1.5);
+          ratio=Math.min(window.devicePixelRatio||1,mobile?1:1.5);
           const width=Math.max(1,Math.round(rect.width*ratio));
           const height=Math.max(1,Math.round(rect.height*ratio));
           if(canvas.width!==width||canvas.height!==height) {
@@ -429,16 +446,32 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
             gl.viewport(0,0,width,height);
           }
           aspect=width/height;
+          modelScale=mobile ? Math.min(2.45,Math.max(1.22,4.55*aspect)) : 3.5;
+          // The WebGL canvas spans the entire hero, but the artwork belongs
+          // in the right column on desktop and beneath the copy on mobile.
+          // Project the visual container's center to world coordinates.
+          if(visual){
+            const bounds=visual.getBoundingClientRect();
+            const x=(bounds.left+bounds.width/2-rect.left)/Math.max(1,rect.width);
+            const y=(bounds.top+bounds.height/2-rect.top)/Math.max(1,rect.height);
+            placementX=((x*2)-1)*5.85*aspect/2.22;
+            placementY=(1-y*2)*5.85/2.22;
+          } else {
+            placementX=(aspect*5.85/2.22)*.49;
+            placementY=0;
+          }
         };
         resizeObserver=new ResizeObserver(resize);
-        resizeObserver.observe(canvas);resize();
+        resizeObserver.observe(canvas);
+        if(visual)resizeObserver.observe(visual);
+        resize();
         intersectionObserver=new IntersectionObserver(entries=>{visible=!!entries[0]?.isIntersecting;});
         intersectionObserver.observe(canvas);
         let yaw=.29,pitch=-.06,prev=0;
         const render=(ms:number)=>{
           if(disposed)return;
           raf=requestAnimationFrame(render);
-          if(!visible||document.hidden||ms-prev<25)return;
+          if(!visible||document.hidden||ms-prev<(mobile?42:25))return;
           prev=ms;
           resize();
           const stage=stageRef.current;
@@ -451,9 +484,10 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           fractureAmount+=(target-fractureAmount)*.065;
           const flight=stage===3&&burstStarted>=0?Math.min((ms-burstStarted)/1000,2.4):0;
           const p=motion.current;
-          yaw+=(.27+p.x*.19-yaw)*.065;
+          const orbit=(mobile&&!prefersReducedMotion)?Math.sin(ms*.00032)*.17:0;
+          yaw+=(.27+orbit+p.x*.19-yaw)*.065;
           pitch+=(-.06-p.y*.12+p.scroll*.12-pitch)*.06;
-          const placement=(aspect*5.85/2.22)*.49;
+          const placement=placementX;
           gl.viewport(0,0,canvas.width,canvas.height);
           gl.clearColor(0,0,0,0);
           gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -463,6 +497,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           gl.uniform1f(ui.yaw,yaw);gl.uniform1f(ui.pitch,pitch);
           gl.uniform1f(ui.time,ms/1000);gl.uniform1f(ui.scroll,p.scroll);
           gl.uniform1f(ui.aspect,aspect);gl.uniform1f(ui.placement,placement);
+          gl.uniform1f(ui.placementY,placementY);gl.uniform1f(ui.modelScale,modelScale);
           gl.uniform1f(ui.brk,fractureAmount);gl.uniform1f(ui.flight,flight);
           gl.uniform1f(ui.damage,stage);
           gl.uniform3fv(ui.impact,impact);
@@ -480,6 +515,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
             gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
             gl.uniform1f(ud.yaw,yaw);gl.uniform1f(ud.aspect,aspect);
             gl.uniform1f(ud.placement,placement);
+            gl.uniform1f(ud.placementY,placementY);gl.uniform1f(ud.modelScale,modelScale);
             gl.uniform1f(ud.time,(ms-burstStarted)/1000);
             gl.uniform1f(ud.ratio,ratio);
             gl.uniform1f(ud.stage,burstStage);

@@ -96,3 +96,36 @@
 @media(max-width:380px){
   .ibh-visual{height:390px}
 }
+
+/* Reveal the completed projects only after the 3D iceberg has shattered away. */
+.ibh-reveal-layer{position:absolute;inset:0;z-index:6;pointer-events:none;transform-style:preserve-3d}
+.ibh-reveal-layer .ibh-preview{animation:none;pointer-events:none;will-change:transform,opacity,filter;transform-origin:center}
+.ibh-reveal-layer .ibh-primary{top:8%;right:0;width:75%;height:265px}
+.ibh-reveal-layer .ibh-secondary{bottom:15%;left:-4%;width:66%;height:222px}
+.ibh-reveal-card .ibh-screen{height:calc(100% - 61px)}
+.ibh-reveal-card .ibh-preview-label{gap:10px}
+.ibh-reveal-card:focus-visible{outline:2px solid #7dece3;outline-offset:5px}
+.ibh-ice-hint{z-index:8}
+.ibh-ice-button:disabled{cursor:default}
+.ibh-scene-loading{position:absolute;left:72%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:11px;font-weight:600;letter-spacing:.09em;color:#a4c6dc;text-shadow:0 1px 12px #081324}
+.ibh-scene-loading-dot{width:8px;height:8px;border-radius:50%;background:#80dbc9;box-shadow:0 0 16px rgba(112,227,220,.6);animation:ibh-loading-pulse 1.6s ease-in-out infinite}
+@keyframes ibh-loading-pulse{50%{transform:scale(.55);opacity:.4}}
+@media(max-width:1150px){
+  .ibh-reveal-layer .ibh-primary{width:77%;height:226px;right:1%}
+  .ibh-reveal-layer .ibh-secondary{width:68%;height:194px;left:0;bottom:15%}
+}
+@media(max-width:760px){
+  .ibh-scene-loading{left:50%;top:72%;font-size:10px}
+  .ibh-reveal-layer .ibh-primary{top:5%;right:1%;width:88%;height:205px}
+  .ibh-reveal-layer .ibh-secondary{bottom:11%;left:1%;width:78%;height:171px}
+  .ibh-reveal-layer .ibh-chrome{height:24px}
+  .ibh-reveal-layer .ibh-screen{height:calc(100% - 55px)}
+  .ibh-reveal-layer .ibh-preview-label{height:31px}
+}
+@media(max-width:380px){
+  .ibh-reveal-layer .ibh-primary{height:175px}
+  .ibh-reveal-layer .ibh-secondary{height:148px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ibh-scene-loading-dot{animation:none}
+}

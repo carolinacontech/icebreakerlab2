@@ -99,7 +99,7 @@
 
 /* Reveal the completed projects only after the 3D iceberg has shattered away. */
 .ibh-reveal-layer{position:absolute;inset:0;z-index:6;pointer-events:none;transform-style:preserve-3d}
-.ibh-reveal-layer .ibh-preview{animation:none;pointer-events:none;will-change:transform,opacity,filter;transform-origin:center}
+.ibh-reveal-layer .ibh-preview{animation:none;opacity:0;pointer-events:none;will-change:transform,opacity,filter;transform-origin:center}
 .ibh-reveal-layer .ibh-primary{top:8%;right:0;width:75%;height:265px}
 .ibh-reveal-layer .ibh-secondary{bottom:15%;left:-4%;width:66%;height:222px}
 .ibh-reveal-card .ibh-screen{height:calc(100% - 61px)}

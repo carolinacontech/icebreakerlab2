@@ -324,7 +324,7 @@ export default function Services() {
               <div
                 className="relative shrink-0 overflow-hidden svc-card-visual"
                 style={{
-                  height: "200px",
+                  height: "var(--svc-visual-height, 200px)",
                   borderBottom: `1px solid rgba(${svc.accentRgb},0.12)`,
                   background: `rgba(${svc.accentRgb},0.03)`,
                 }}

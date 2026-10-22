@@ -77,3 +77,8 @@
  .ibh-fracture-2 .ibh-mobile-ice{transform:scale(1.12) rotate(12deg);opacity:.74}
  .ibh-fracture-3 .ibh-mobile-ice{transform:scale(1.6) rotate(30deg);opacity:0}
 }
+
+.ibh-scene-fallback{position:absolute;left:57%;top:16%;width:27%;height:68%;
+ clip-path:polygon(49% 0,68% 22%,87% 43%,100% 54%,79% 64%,90% 81%,51% 100%,17% 82%,13% 59%,0 52%,27% 31%);
+ background:linear-gradient(130deg,#efffff 0%,#9cdded 29%,#4e93c9 54%,#162d6e 83%);
+ opacity:.8;filter:drop-shadow(0 0 32px rgba(134,235,252,.3));pointer-events:none}

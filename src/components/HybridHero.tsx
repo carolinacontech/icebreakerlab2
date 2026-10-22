@@ -5,22 +5,23 @@ import {AnimatePresence,motion,useMotionValue,useReducedMotion,useScroll,useSpri
 import IcebergGLB,{type SceneMotion} from "./IcebergGLB";
 import "./hybrid-hero.css";
 
-type Project = {name:string;detail:string;src:string};
+type Project = {name:string;detail:string;src:string;mobileSrc?:string};
 
-// Exactly two fixed floating cards; each cycles through its own two projects.
+// Desktop: one browser window with full websites and one authentic phone
+// using mobile screenshots. Both rotate, without multiplying visual clutter.
 const portfolioPairs:ReadonlyArray<ReadonlyArray<Project>>=[
  [
-  {name:"NODO Academy",detail:"WEB DESIGN · SEO",src:"/images/portfolio/mockups/nodo-academy.png"},
-  {name:"Las Marías",detail:"E-COMMERCE · ONLINE STORE",src:"/images/portfolio/mockups/las-marias-market.jpg"}
+  {name:"Las Marías",detail:"E-COMMERCE · ONLINE STORE",src:"/images/portfolio/mockups/las-marias-market.jpg"},
+  {name:"EVA Shoes",detail:"BRANDING · WEB EXPERIENCE",src:"/images/portfolio/mockups/eva-shoes.png"}
  ],
  [
-  {name:"Market Open Media",detail:"WEB DESIGN · STRATEGY",src:"/images/portfolio/mockups/market-open-media.png"},
-  {name:"EVA Shoes",detail:"BRANDING · WEB EXPERIENCE",src:"/images/portfolio/mockups/eva-shoes.png"}
+  {name:"NODO Academy",detail:"WEB DESIGN · SEO",src:"/images/portfolio/mockups/nodo-academy.png",mobileSrc:"/images/portfolio/mockups/nodo-academy-mobile.png"},
+  {name:"Market Open Media",detail:"WEB DESIGN · STRATEGY",src:"/images/portfolio/mockups/market-open-media.png",mobileSrc:"/images/portfolio/mockups/market-openmedia-mobile.png"}
  ]
 ];
-// A single rotating showcase for phones; the desktop keeps two independent windows.
+// On narrow screens the agreed single browser card continues to show all four.
 const mobileProjects:ReadonlyArray<Project> = [
- portfolioPairs[0][0],portfolioPairs[1][0],portfolioPairs[0][1],portfolioPairs[1][1]
+ portfolioPairs[1][0],portfolioPairs[1][1],portfolioPairs[0][0],portfolioPairs[0][1]
 ];
 
 function RotatingProjectCard({
@@ -47,9 +48,10 @@ function RotatingProjectCard({
   return()=>window.clearInterval(interval);
  },[reveal,paused,reduced,position,projects.length,mobile]);
  const project=projects[active];
+ const isPhone=position===1&&!mobile;
  return <motion.a
    href="/portfolio"
-   className={"ibh-preview ibh-reveal-card "+(position===0?"ibh-primary":"ibh-secondary")+(mobile?" ibh-mobile-preview":"")}
+   className={"ibh-preview ibh-reveal-card "+(position===0?"ibh-primary":"ibh-secondary")+(mobile?" ibh-mobile-preview":"")+(isPhone?" ibh-phone-preview":"")}
    aria-label={"View "+project.name+" in our portfolio"}
    aria-hidden={!reveal}
    tabIndex={reveal?0:-1}
@@ -63,35 +65,63 @@ function RotatingProjectCard({
     : {opacity:0,x:position===0?76:-70,y:position===0?-24:48,scale:.88,filter:"blur(8px)",pointerEvents:"none"}}
    transition={{duration:reduced?0:.72,delay:reveal&&!reduced?position*.17:0,ease:[.2,.8,.2,1]}}
  >
-  <span className="ibh-chrome">
-   <span className="ibh-dotset" aria-hidden="true"><i/><i/><i/></span>
-   <span>SELECTED WORK / ICEBREAKERLAB</span>
-   <span className="ibh-card-position">{String(active+1).padStart(2,"0")} / {String(projects.length).padStart(2,"0")}</span>
-  </span>
-  <AnimatePresence initial={false}>
-   {prepare&&<motion.span
-    key={project.name}
-    className="ibh-card-swap"
-    initial={reduced?false:{opacity:0,y:12,scale:1.025,filter:"blur(6px)"}}
-    animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
-    exit={reduced?{opacity:0}:{opacity:0,y:-12,scale:.985,filter:"blur(6px)"}}
-    transition={{duration:reduced?0:.46,ease:[.25,.75,.25,1]}}
-   >
-    <span className="ibh-screen">
-     <Image
-      src={project.src}
-      alt={"Website preview for "+project.name}
-      fill
-      loading={active===0?"eager":"lazy"}
-      sizes="(max-width:760px) 78vw, (max-width:1150px) 34vw, 390px"
-      style={{objectFit:"cover",objectPosition:"top"}}
-     />
+  {isPhone ? (
+   <>
+    <span className="ibh-phone-shell">
+     <span className="ibh-phone-screen-frame">
+      <AnimatePresence initial={false}>
+       {prepare&&<motion.span
+        key={project.name}
+        className="ibh-phone-screen-image"
+        initial={reduced?false:{opacity:0,y:20,scale:1.06}}
+        animate={{opacity:1,y:0,scale:1}}
+        exit={reduced?{opacity:0}:{opacity:0,y:-20,scale:.97}}
+        transition={{duration:reduced?0:.5,ease:[.25,.75,.25,1]}}
+       >
+        <Image src={project.mobileSrc??project.src}
+         alt={"Mobile version of "+project.name}
+         fill
+         loading={active===0?"eager":"lazy"}
+         sizes="(max-width:1150px) 175px, 225px"
+         style={{objectFit:"cover",objectPosition:"top"}}
+        />
+       </motion.span>}
+      </AnimatePresence>
+     </span>
+     <span className="ibh-phone-island" aria-hidden="true"/>
+     <span className="ibh-phone-homebar" aria-hidden="true"/>
     </span>
-    <span className="ibh-preview-label">
-     <strong>{project.name}</strong><small>{project.detail}</small>
+    <span className="ibh-phone-caption"><strong>{project.name}</strong><small>{project.detail}</small></span>
+   </>
+  ) : (
+   <>
+    <span className="ibh-chrome">
+     <span className="ibh-dotset" aria-hidden="true"><i/><i/><i/></span>
+     <span className="ibh-card-position">{String(active+1).padStart(2,"0")} / {String(projects.length).padStart(2,"0")}</span>
     </span>
-   </motion.span>}
-  </AnimatePresence>
+    <AnimatePresence initial={false}>
+     {prepare&&<motion.span
+      key={project.name}
+      className="ibh-card-swap"
+      initial={reduced?false:{opacity:0,y:12,scale:1.025,filter:"blur(6px)"}}
+      animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
+      exit={reduced?{opacity:0}:{opacity:0,y:-12,scale:.985,filter:"blur(6px)"}}
+      transition={{duration:reduced?0:.46,ease:[.25,.75,.25,1]}}
+     >
+      <span className="ibh-screen">
+       <Image src={project.src} alt={"Website preview for "+project.name}
+        fill loading={active===0?"eager":"lazy"}
+        sizes="(max-width:760px) 78vw, (max-width:1150px) 34vw, 390px"
+        style={{objectFit:"cover",objectPosition:"top"}}
+       />
+      </span>
+      <span className="ibh-preview-label">
+       <strong>{project.name}</strong><small>{project.detail}</small>
+      </span>
+     </motion.span>}
+    </AnimatePresence>
+   </>
+  )}
  </motion.a>;
 }
 

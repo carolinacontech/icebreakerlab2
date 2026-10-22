@@ -32,7 +32,7 @@ const stats = [
 export default function StatsStrip() {
   return (
     <div
-      className="relative py-14 overflow-hidden"
+      className="relative py-9 sm:py-14 overflow-hidden"
       style={{
         background: "rgba(6,5,28,0.98)",
         borderBottom: "1px solid rgba(83,74,183,0.12)",
@@ -41,7 +41,7 @@ export default function StatsStrip() {
       <div className="absolute inset-0 pointer-events-none" style={{
         background: "radial-gradient(ellipse 50% 100% at 50% 50%, rgba(83,74,183,0.06) 0%, transparent 70%)",
       }} />
-      <div className="relative max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="relative max-w-5xl mx-auto px-5 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-7 sm:gap-8">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}
@@ -52,7 +52,7 @@ export default function StatsStrip() {
             className="flex flex-col items-center text-center"
           >
             <div
-              className="text-4xl font-bold leading-none mb-2"
+              className="text-3xl sm:text-4xl font-bold leading-none mb-2"
               style={{ color: "var(--snow)", letterSpacing: "-0.03em" }}
             >
               <Counter to={s.value} prefix={s.prefix} suffix={s.suffix} />

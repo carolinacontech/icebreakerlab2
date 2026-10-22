@@ -224,33 +224,90 @@
 }
 
 
-/* The post-shatter reveal is one browser and one actual mobile-device shape. */
+/* The shatter reveal now forms a deliberate two-device composition.
+   Web on the left, real mobile mockup on the right, with a quiet diagonal.
+   A grid keeps them from colliding as the visual column changes width. */
 @media(min-width:761px){
- .ibh-reveal-desktop .ibh-primary{right:-1%;top:8%;width:74%;height:270px}
- .ibh-reveal-desktop .ibh-phone-preview{
-  position:absolute;left:6%;bottom:3%;top:auto;right:auto;
-  width:clamp(164px,17vw,212px);height:clamp(290px,31vw,367px);
-  background:transparent;border:0;overflow:visible;border-radius:0;box-shadow:none;
-  display:flex;align-items:center;flex-direction:column;gap:8px;
- }
- .ibh-phone-shell{display:block;position:relative;flex:1 1 auto;width:80%;min-height:0;
-  border:5px solid #202135;border-radius:28px;background:#080b17;
-  box-shadow:0 20px 55px rgba(0,0,0,.60),0 0 0 1px rgba(165,214,246,.48),0 0 30px rgba(101,198,229,.15);
-  overflow:hidden}
- .ibh-phone-screen-frame{display:block;position:absolute;inset:2px;border-radius:21px;overflow:hidden;background:#070a18}
- .ibh-phone-screen-image{display:block;position:absolute;inset:0}
- .ibh-phone-island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:35%;height:12px;border-radius:12px;background:#070a15;z-index:2}
- .ibh-phone-homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:29%;height:4px;border-radius:4px;background:rgba(240,246,255,.55);z-index:2}
- .ibh-phone-caption{display:flex;flex-direction:column;gap:2px;align-items:center;text-align:center;width:100%;
-  text-shadow:0 2px 12px rgba(0,0,0,.85)}
- .ibh-phone-caption strong{font-size:11px;white-space:nowrap;color:#f6faff}
- .ibh-phone-caption small{font-size:9px;color:#a3e3db;white-space:nowrap}
+  .ibh-reveal-desktop{
+    position:absolute;
+    inset:11% -1% 16% -1%;
+    display:grid;
+    grid-template-columns:minmax(0,1.72fr) minmax(0,.8fr);
+    align-items:center;
+    gap:clamp(12px,1.5vw,22px);
+    isolation:isolate;
+  }
+  .ibh-reveal-desktop .ibh-primary{
+    position:relative;
+    inset:auto;
+    left:auto;top:auto;right:auto;bottom:auto;
+    width:100%;
+    height:auto;
+    max-height:285px;
+    aspect-ratio:1.54;
+    margin-top:-24px;
+    justify-self:stretch;
+    z-index:1;
+    rotate:-1.5deg;
+    border-radius:15px;
+    box-shadow:0 23px 56px rgba(0,0,0,.45),0 0 23px rgba(111,203,232,.12);
+  }
+  .ibh-reveal-desktop .ibh-phone-preview{
+    position:relative;
+    inset:auto;
+    left:auto;top:auto;right:auto;bottom:auto;
+    width:min(100%,183px);
+    height:auto;
+    aspect-ratio:.51;
+    max-height:370px;
+    margin:32px 0 0;
+    justify-self:center;
+    z-index:2;
+    rotate:2.5deg;
+    background:transparent;
+    border:0;
+    overflow:visible;
+    border-radius:0;
+    box-shadow:none;
+    display:flex;
+    align-items:center;
+    flex-direction:column;
+    gap:10px;
+  }
+  .ibh-phone-shell{
+    display:block;position:relative;flex:1 1 auto;width:86%;min-height:0;
+    border:5px solid #202135;border-radius:28px;background:#080b17;
+    box-shadow:0 22px 50px rgba(0,0,0,.58),0 0 0 1px rgba(165,214,246,.38),0 0 26px rgba(101,198,229,.11);
+    overflow:hidden;
+  }
+  .ibh-phone-screen-frame{display:block;position:absolute;inset:2px;border-radius:21px;overflow:hidden;background:#070a18}
+  .ibh-phone-screen-image{display:block;position:absolute;inset:0}
+  .ibh-phone-island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:35%;height:12px;border-radius:12px;background:#070a15;z-index:2}
+  .ibh-phone-homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:29%;height:4px;border-radius:4px;background:rgba(240,246,255,.55);z-index:2}
+  .ibh-phone-caption{display:flex;flex-direction:column;gap:3px;align-items:center;text-align:center;width:100%;min-width:0;
+    text-shadow:0 2px 12px rgba(0,0,0,.85)}
+  .ibh-phone-caption strong{font-size:11px;line-height:1.3;color:#f6faff;max-width:100%;text-wrap:balance}
+  .ibh-phone-caption small{font-size:9px;line-height:1.3;color:#a3e3db;max-width:100%;text-wrap:balance}
 }
-@media(min-width:761px) and (max-width:1150px){
- .ibh-reveal-desktop .ibh-primary{top:7%;width:77%;height:222px}
- .ibh-reveal-desktop .ibh-phone-preview{left:0;bottom:8%;width:165px;height:285px}
+/* The hero has a narrower art column on portrait tablets / small laptops:
+   keep each preview proportionate rather than enlarging and overlapping it. */
+@media(min-width:761px) and (max-width:1024px){
+  .ibh-reveal-desktop{
+    inset:13% -1% 16% -1%;
+    grid-template-columns:minmax(0,1.62fr) minmax(0,.84fr);
+    gap:11px;
+  }
+  .ibh-reveal-desktop .ibh-primary{width:100%;height:auto;max-height:205px;margin-top:-16px;rotate:-1deg}
+  .ibh-reveal-desktop .ibh-phone-preview{
+    width:min(100%,137px);height:auto;max-height:290px;margin-top:21px;rotate:2deg;gap:6px
+  }
+  .ibh-phone-shell{border-width:4px;border-radius:23px}
+  .ibh-phone-screen-frame{border-radius:17px}
+  .ibh-phone-caption strong{font-size:10px}
+  .ibh-phone-caption small{font-size:8px}
 }
 @media(max-width:760px){
- .ibh-reveal-mobile .ibh-chrome{justify-content:space-between}
- .ibh-reveal-mobile .ibh-card-position{margin-left:auto}
+  /* Keep the agreed single rotating website window on mobile. */
+  .ibh-reveal-mobile .ibh-chrome{justify-content:space-between}
+  .ibh-reveal-mobile .ibh-card-position{margin-left:auto}
 }

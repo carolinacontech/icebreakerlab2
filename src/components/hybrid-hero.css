@@ -222,3 +222,35 @@
  .ibh-visual{margin-top:8px}
  .ibh-ice-hint{bottom:0}
 }
+
+
+/* The post-shatter reveal is one browser and one actual mobile-device shape. */
+@media(min-width:761px){
+ .ibh-reveal-desktop .ibh-primary{right:-1%;top:8%;width:74%;height:270px}
+ .ibh-reveal-desktop .ibh-phone-preview{
+  position:absolute;left:6%;bottom:3%;top:auto;right:auto;
+  width:clamp(164px,17vw,212px);height:clamp(290px,31vw,367px);
+  background:transparent;border:0;overflow:visible;border-radius:0;box-shadow:none;
+  display:flex;align-items:center;flex-direction:column;gap:8px;
+ }
+ .ibh-phone-shell{display:block;position:relative;flex:1 1 auto;width:80%;min-height:0;
+  border:5px solid #202135;border-radius:28px;background:#080b17;
+  box-shadow:0 20px 55px rgba(0,0,0,.60),0 0 0 1px rgba(165,214,246,.48),0 0 30px rgba(101,198,229,.15);
+  overflow:hidden}
+ .ibh-phone-screen-frame{display:block;position:absolute;inset:2px;border-radius:21px;overflow:hidden;background:#070a18}
+ .ibh-phone-screen-image{display:block;position:absolute;inset:0}
+ .ibh-phone-island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:35%;height:12px;border-radius:12px;background:#070a15;z-index:2}
+ .ibh-phone-homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:29%;height:4px;border-radius:4px;background:rgba(240,246,255,.55);z-index:2}
+ .ibh-phone-caption{display:flex;flex-direction:column;gap:2px;align-items:center;text-align:center;width:100%;
+  text-shadow:0 2px 12px rgba(0,0,0,.85)}
+ .ibh-phone-caption strong{font-size:11px;white-space:nowrap;color:#f6faff}
+ .ibh-phone-caption small{font-size:9px;color:#a3e3db;white-space:nowrap}
+}
+@media(min-width:761px) and (max-width:1150px){
+ .ibh-reveal-desktop .ibh-primary{top:7%;width:77%;height:222px}
+ .ibh-reveal-desktop .ibh-phone-preview{left:0;bottom:8%;width:165px;height:285px}
+}
+@media(max-width:760px){
+ .ibh-reveal-mobile .ibh-chrome{justify-content:space-between}
+ .ibh-reveal-mobile .ibh-card-position{margin-left:auto}
+}

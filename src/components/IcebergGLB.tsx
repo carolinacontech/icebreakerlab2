@@ -23,10 +23,13 @@ precision highp float;
 in vec3 aPosition;
 in vec3 aNormal;
 in vec2 aUv;
+in float aCrack;
 uniform vec3 uCenter, uShard, uPivot;
 uniform float uYaw, uPitch, uTime, uScroll, uAspect, uBreak, uFlight, uPlacement;
-out vec3 vNormal, vEye, vWorld;
+uniform float uShardDelay, uShardSpin;
+out vec3 vNormal, vEye, vWorld, vLocal;
 out vec2 vUv;
+out float vCrack;
 void main() {
   vec3 p = aPosition - uCenter;
   vec3 n = aNormal;
@@ -40,12 +43,13 @@ void main() {
   mat3 rotation = rx * ry;
   vec3 pivot = rotation * uPivot;
   vec3 q = rotation * p;
-  // Rotate each contiguous surface region around its own 3D centroid.
-  float spin = uBreak * .33 * (uShard.x * 1.4 + uShard.z);
+  float released = smoothstep(uShardDelay, uShardDelay+.37, uBreak);
+  float spin = released * uShardSpin;
   mat3 twist = mat3(cos(spin),0.,-sin(spin), 0.,1.,0., sin(spin),0.,cos(spin));
   q = pivot + twist * (q - pivot);
   q *= 3.5;
-  q += rotation * uShard * (uBreak * 2.65 + uFlight * 1.1);
+  // Small fractures first; staggered, nonuniform separation only on final impact.
+  q += rotation * uShard * (uBreak*.018 + released*2.55 + uFlight*released*.75);
   q.x += uPlacement;
   q.y += sin(uTime * .57) * .048 - uScroll * .18;
   q.z -= 5.85;
@@ -53,6 +57,8 @@ void main() {
   vEye = normalize(-q);
   vWorld = q;
   vUv = aUv;
+  vLocal = p;
+  vCrack = aCrack;
   float nearPlane = .1, farPlane = 80.;
   float f = 2.22;
   gl_Position = vec4(q.x * f/uAspect, q.y*f,
@@ -62,10 +68,12 @@ void main() {
 
 const ICE_FRAGMENT = `#version 300 es
 precision highp float;
-in vec3 vNormal, vEye, vWorld;
+in vec3 vNormal, vEye, vWorld, vLocal;
 in vec2 vUv;
+in float vCrack;
 uniform sampler2D uAlbedo, uNormalTex;
-uniform float uBreak;
+uniform float uBreak, uDamageStage, uTime;
+uniform vec3 uImpact;
 out vec4 outColor;
 vec3 tonemap(vec3 color) {
   return (color * (2.51 * color + .03)) /
@@ -99,6 +107,15 @@ void main() {
   color += vec3(.16,.8,1.)*fresnel*1.13;
   color += vec3(.8,1.,1.)*specular*1.6;
   color += vec3(.22,.68,.95)*broadSpec*.22;
+  // Fine Voronoi stress lines: calculated on the model's actual vertices,
+  // warped to avoid a grid. The first strike spreads from a localized impact.
+  float reach = uDamageStage < 1.5 ? .34 : (uDamageStage < 2.5 ? .72 : 1.8);
+  float stressFront = 1.-smoothstep(reach-.12, reach+.055, distance(vLocal,uImpact));
+  float grain = .72+.28*sin(vLocal.x*103.+vLocal.y*81.+vLocal.z*43.);
+  float fissure = smoothstep(.20,.82,vCrack) * stressFront *
+                  clamp(uDamageStage,0.,1.) * grain;
+  color = mix(color,vec3(.025,.10,.17),fissure*.83);
+  color += vec3(.32,.79,.95)*pow(fissure,2.)*.35;
   color += vec3(.14,.53,.74)*uBreak*.14;
   color = tonemap(color*1.18);
   outColor = vec4(pow(clamp(color,0.,1.),vec3(1./2.2)),1.);
@@ -108,7 +125,7 @@ const DUST_VERTEX = `#version 300 es
 precision highp float;
 in vec3 aPoint, aSpeed;
 in float aSeed;
-uniform float uYaw, uAspect, uPlacement, uTimeSinceBreak, uPixelRatio;
+uniform float uYaw, uAspect, uPlacement, uTimeSinceBreak, uPixelRatio, uBurstStage;
 out float vOpacity,vSeed;
 void main() {
   float t = max(uTimeSinceBreak,0.);
@@ -116,7 +133,8 @@ void main() {
   float angle = uYaw;
   p = vec3(p.x*cos(angle)+p.z*sin(angle),p.y,-p.x*sin(angle)+p.z*cos(angle));
   p *= 3.5;
-  p += aSpeed*(t*3.35) + vec3(0.,-1.,0.)*(t*t*.54);
+  float speed=uBurstStage<1.5?.72:(uBurstStage<2.5?1.45:3.35);
+  p += aSpeed*(t*speed) + vec3(0.,-1.,0.)*(t*t*(uBurstStage<2.5?.26:.54));
   p.x += uPlacement;
   p.z -= 5.85;
   float f=2.22;
@@ -124,9 +142,10 @@ void main() {
   gl_Position=vec4(p.x*f/uAspect,p.y*f,
     -(farPlane+nearPlane)/(farPlane-nearPlane)*p.z
     -2.*farPlane*nearPlane/(farPlane-nearPlane),-p.z);
-  gl_PointSize=clamp((3.5+aSeed*3.3)*uPixelRatio*5.8/max(-p.z,1.),1.,10.);
-  vOpacity= (uTimeSinceBreak < 0. ? 0. : (1.-smoothstep(1.2,3.6,t)))*
-    (1.-.55*aSeed);
+  float sizeFactor=uBurstStage<1.5?.46:(uBurstStage<2.5?.68:1.);
+  gl_PointSize=clamp((2.6+aSeed*3.1)*sizeFactor*uPixelRatio*5.8/max(-p.z,1.),1.,9.);
+  float life=uBurstStage<1.5?1.15:(uBurstStage<2.5?1.85:3.7);
+  vOpacity=(uTimeSinceBreak<0.?0.:(1.-smoothstep(life*.38,life,t)))*(1.-.55*aSeed);
   vSeed=aSeed;
 }`;
 
@@ -191,7 +210,11 @@ function bindAttribute(gl:WebGL2RenderingContext,program:WebGLProgram,name:strin
   gl.vertexAttribPointer(loc,components,gl.FLOAT,false,0,0);
   return buffer;
 }
-type Shard = { offset:number; count:number; direction:[number,number,number]; pivot:[number,number,number] };
+type Shard = {
+  offset:number; count:number;
+  direction:[number,number,number]; pivot:[number,number,number];
+  delay:number; spin:number;
+};
 export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<SceneMotion>;fracture:number}) {
   const canvasRef=useRef<HTMLCanvasElement>(null);
   const stageRef=useRef(fracture);
@@ -231,31 +254,80 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
         const center=[(lower[0]+upper[0])/2,(lower[1]+upper[1])/2,(lower[2]+upper[2])/2];
         const idxAccessor=json.accessors[primitive.indices],idxView=json.bufferViews[idxAccessor.bufferView];
         const originalIndices=new Uint32Array(binary,(idxView.byteOffset||0)+(idxAccessor.byteOffset||0),idxAccessor.count);
-        const groups:Array<number[]>=Array.from({length:48},()=>[]);
-        const centers=Array.from({length:48},()=>[0,0,0,0]);
-        for(let i=0;i<originalIndices.length;i+=3) {
-          const i0=originalIndices[i]*3,i1=originalIndices[i+1]*3,i2=originalIndices[i+2]*3;
-          const x=(vertices[i0]+vertices[i1]+vertices[i2])/3-center[0];
-          const depth=(vertices[i0+1]+vertices[i1+1]+vertices[i2+1])/3-center[1];
-          const height=-(vertices[i0+2]+vertices[i1+2]+vertices[i2+2])/3;
-          const sector=Math.min(11,Math.floor((Math.atan2(depth,x)+Math.PI)/(2*Math.PI)*12));
-          const band=Math.min(3,Math.max(0,Math.floor(height/1.05*4)));
-          const group=band*12+sector;
-          groups[group].push(originalIndices[i],originalIndices[i+1],originalIndices[i+2]);
-          centers[group][0]+=x;centers[group][1]+=height+center[2];centers[group][2]+=depth;
+        // Irregular, surface-based Voronoi patches. Unlike angular slices,
+        // these have different areas, irregular borders and staggered inertia.
+        const shardCount=43;
+        let rng=82917;
+        const rand=()=>{rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;};
+        const anchors:[number,number,number][]=[];
+        const vertexCount=position.count;
+        const point=(idx:number):[number,number,number]=>{
+          const k=idx*3;
+          return [vertices[k]-center[0],-(vertices[k+2]-center[2]),vertices[k+1]-center[1]];
+        };
+        for(let i=0;i<shardCount;i++){
+          let choice:[number,number,number]=[0,0,0], best=-1;
+          // Farthest-of-random samples yields uneven natural cells without duplicates.
+          for(let candidate=0;candidate<13;candidate++){
+            const p=point(Math.floor(rand()*vertexCount));
+            let closest=10;
+            for(const a of anchors){
+              const dx=p[0]-a[0],dy=p[1]-a[1],dz=p[2]-a[2];
+              closest=Math.min(closest,dx*dx+dy*dy*.85+dz*dz);
+            }
+            const jitter=.7+rand()*.65;
+            if(closest*jitter>best){best=closest*jitter;choice=p;}
+          }
+          anchors.push(choice);
+        }
+        const impact:[number,number,number]=[-.055,.13,.12];
+        const nearest=(x:number,y:number,z:number):[number,number,number]=>{
+          // Warp cell boundaries so the fissures are jagged rather than straight.
+          const px=x+.021*Math.sin(y*35.+z*12.);
+          const py=y+.021*Math.sin(z*28.+x*17.);
+          const pz=z+.018*Math.cos(x*25.-y*19.);
+          let selected=0,first=1e9,second=1e9;
+          for(let i=0;i<anchors.length;i++){
+            const a=anchors[i],dx=px-a[0],dy=py-a[1],dz=pz-a[2];
+            const d=dx*dx+dy*dy*.85+dz*dz;
+            if(d<first){second=first;first=d;selected=i;}
+            else if(d<second){second=d;}
+          }
+          return [selected,Math.sqrt(first),Math.sqrt(second)];
+        };
+        const crackStrength=new Float32Array(vertexCount);
+        for(let i=0;i<vertexCount;i++){
+          const p=point(i),dist=nearest(p[0],p[1],p[2]);
+          crackStrength[i]=Math.max(0,1-(dist[2]-dist[1])/.030);
+        }
+        const groups:Array<number[]>=Array.from({length:shardCount},()=>[]);
+        const centers=Array.from({length:shardCount},()=>[0,0,0,0]);
+        for(let i=0;i<originalIndices.length;i+=3){
+          const i0=originalIndices[i],i1=originalIndices[i+1],i2=originalIndices[i+2];
+          const p0=point(i0),p1=point(i1),p2=point(i2);
+          const x=(p0[0]+p1[0]+p2[0])/3;
+          const y=(p0[1]+p1[1]+p2[1])/3;
+          const z=(p0[2]+p1[2]+p2[2])/3;
+          const group=nearest(x,y,z)[0];
+          groups[group].push(i0,i1,i2);
+          centers[group][0]+=x;centers[group][1]+=y;centers[group][2]+=z;
           centers[group][3]++;
         }
         const sorted=new Uint32Array(originalIndices.length);
-        const shards:Shard[]=[];let cursor=0;
-        for(let i=0;i<groups.length;i++) {
-          const current=groups[i],angle=(i%12+.5)*Math.PI/6-Math.PI;
+        const shards:Shard[]=[];
+        let cursor=0;
+        for(let i=0;i<groups.length;i++){
+          const current=groups[i],c=centers[i],num=Math.max(c[3],1);
           sorted.set(current,cursor);
-          const cent=centers[i],num=Math.max(cent[3],1),band=Math.floor(i/12);
-          const radius=.56+((i*37)%13)*.018;
+          const pivot:[number,number,number]=[c[0]/num,c[1]/num,c[2]/num];
+          const dx=pivot[0]-impact[0],dy=pivot[1]-impact[1],dz=pivot[2]-impact[2];
+          const length=Math.max(.14,Math.hypot(dx,dy,dz));
+          const strength=.33+rand()*.95;
           shards.push({
-            offset:cursor*4,count:current.length,
-            direction:[Math.cos(angle)*radius,(band-1.5)*.29+Math.sin(i*7)*.12,Math.sin(angle)*radius],
-            pivot:[cent[0]/num,cent[1]/num,cent[2]/num]
+            offset:cursor*4,count:current.length,pivot,
+            direction:[dx/length*strength+(rand()-.5)*.55,dy/length*strength+(rand()-.5)*.40,dz/length*strength+(rand()-.5)*.55],
+            delay:.22+rand()*.43,
+            spin:(rand()-.5)*1.18
           });
           cursor+=current.length;
         }
@@ -267,7 +339,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
         arrays.push(iceVAO);gl.bindVertexArray(iceVAO);
         gl.useProgram(iceProgram);
         for(const [name,size,values] of [
-          ["aPosition",3,vertices],["aNormal",3,normals],["aUv",2,uvs]
+          ["aPosition",3,vertices],["aNormal",3,normals],["aUv",2,uvs],["aCrack",1,crackStrength]
         ] as [string,number,Float32Array][]) {
           const buffer=bindAttribute(gl,iceProgram,name,size,values);
           if(buffer)buffers.push(buffer);

@@ -194,3 +194,31 @@
   .ibh-reveal-layer .ibh-primary{right:0;width:82%}
   .ibh-reveal-layer .ibh-secondary{left:0;width:74%;bottom:9%}
 }
+
+
+/* Two floating windows on desktop; a single rotating portfolio window on mobile. */
+.ibh-reveal-desktop,.ibh-reveal-mobile{position:absolute;inset:0;pointer-events:none}
+.ibh-reveal-mobile{display:none}
+.ibh-mobile-ice-invite,.ibh-mobile-actions{display:none}
+@media(max-width:760px){
+ .ibh{padding-bottom:48px}
+ .ibh-buttons-desktop{display:none!important}
+ .ibh-mobile-ice-invite{display:flex;align-items:center;gap:12px;margin-top:24px;padding:13px 15px;border:1px solid rgba(125,236,227,.32);border-radius:16px;background:rgba(53,105,117,.13);color:#d5fcf8}
+ .ibh-mobile-invite-icon{font-size:24px;color:#80ddd1;line-height:1}
+ .ibh-mobile-ice-invite strong{font-size:10px;letter-spacing:.1em;display:block}
+ .ibh-mobile-ice-invite small{font-size:12px;line-height:1.5;color:#b9c9d9;display:block;margin-top:3px}
+ .ibh-reveal-desktop{display:none!important}
+ .ibh-reveal-mobile{display:block;position:absolute;inset:0}
+ .ibh-reveal-layer{display:block;inset:5% 0 72px}
+ .ibh-reveal-mobile .ibh-mobile-preview{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;margin:0!important;border-radius:15px}
+ .ibh-mobile-preview .ibh-chrome{height:29px;min-height:29px}
+ .ibh-mobile-preview .ibh-card-swap{top:29px;inset:29px 0 0}
+ .ibh-mobile-preview .ibh-preview-label{min-height:39px;flex-basis:39px}
+ .ibh-mobile-preview .ibh-preview-label strong{font-size:12px}
+ .ibh-mobile-preview .ibh-preview-label small{font-size:9px}
+ .ibh-mobile-actions{display:block;width:100%;max-width:490px;margin:14px auto 20px}
+ .ibh-mobile-actions .ibh-buttons{margin-top:0;display:flex;gap:10px}
+ .ibh-mobile-actions .ibh-button{min-height:51px}
+ .ibh-visual{margin-top:8px}
+ .ibh-ice-hint{bottom:0}
+}

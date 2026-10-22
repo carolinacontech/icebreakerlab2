@@ -367,27 +367,31 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           const offset=view.byteOffset||0;
           const sourceBitmap=await createImageBitmap(new Blob([binary.slice(offset,offset+view.byteLength)],{type:img.mimeType}));
           if(disposed){sourceBitmap.close();return;}
-          // Avoid allocating huge 2K/4K GPU textures on phones. The source
-          // model is preserved; mobile uploads downscaled textures only.
+          // Mobile Safari supports WebGL2 but may not support bitmap resize
+          // options. Downscale with a regular canvas before GPU upload.
           const maxEdge=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,mobile?1024:2048);
           const factor=Math.min(1,maxEdge/Math.max(sourceBitmap.width,sourceBitmap.height));
-          const bitmap=factor<1 ? await createImageBitmap(sourceBitmap,{
-            resizeWidth:Math.max(1,Math.round(sourceBitmap.width*factor)),
-            resizeHeight:Math.max(1,Math.round(sourceBitmap.height*factor)),
-            resizeQuality:"high"
-          }):sourceBitmap;
-          if(bitmap!==sourceBitmap)sourceBitmap.close();
-          if(disposed){bitmap.close();return;}
+          let image:ImageBitmap|HTMLCanvasElement=sourceBitmap;
+          if(factor<1){
+            const scaled=document.createElement("canvas");
+            scaled.width=Math.max(1,Math.round(sourceBitmap.width*factor));
+            scaled.height=Math.max(1,Math.round(sourceBitmap.height*factor));
+            const context=scaled.getContext("2d",{alpha:false});
+            if(!context){sourceBitmap.close();throw Error("Cannot resize GLB texture");}
+            context.drawImage(sourceBitmap,0,0,scaled.width,scaled.height);
+            image=scaled;
+          }
+          if(disposed){sourceBitmap.close();return;}
           const tex=gl.createTexture();if(!tex)throw Error("Unable to allocate texture");
           textures.push(tex);
           gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,tex);
           gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
-          gl.texImage2D(gl.TEXTURE_2D,0,unit===0?gl.SRGB8:gl.RGB8,gl.RGB,gl.UNSIGNED_BYTE,bitmap);
+          gl.texImage2D(gl.TEXTURE_2D,0,unit===0?gl.SRGB8:gl.RGB8,gl.RGB,gl.UNSIGNED_BYTE,image);
           gl.generateMipmap(gl.TEXTURE_2D);
           gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
           gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
           gl.uniform1i(gl.getUniformLocation(iceProgram,unit===0?"uAlbedo":"uNormalTex"),unit);
-          bitmap.close();
+          sourceBitmap.close();
         }
         if(disposed)return;
         const pCount=mobile?560:1800,points=new Float32Array(pCount*3),

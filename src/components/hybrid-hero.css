@@ -53,3 +53,27 @@
 .ibh-ice-hint button:focus-visible{outline:2px solid #7dece3;outline-offset:4px}
 @media(max-width:760px){.ibh-visual{height:450px}.ibh-model.ibh-ice-button{left:7%;width:86%;height:88%}.ibh-ice-hint{bottom:0;font-size:8px;letter-spacing:.07em;gap:6px;white-space:normal;width:100%}}
 @media(prefers-reduced-motion:reduce){.ibh-model.ibh-ice-button{animation:none}}
+
+/* Cinematic full-bleed WebGL scene: particles are not constrained to the iceberg button. */
+.ibh{isolation:isolate}
+.ibh-atmosphere{z-index:-2}
+.ibh-fullstage{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.ibh-fullscene,.ibh-fullscene-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.ibh-fullscene-canvas{transition:opacity .45s ease}
+.ibh-grid{z-index:2;pointer-events:none}
+.ibh-copy,.ibh-copy a,.ibh-ice-button,.ibh-ice-hint,.ibh-ice-hint button{pointer-events:auto}
+.ibh-visual{z-index:2}
+.ibh-model.ibh-ice-button{filter:none;animation:none;left:5%;top:1%;width:90%;height:89%;background:transparent}
+.ibh-ice-button .ibh-mobile-ice{display:none}
+.ibh-ice-hint{bottom:-1%;background:rgba(7,13,28,.48);border-radius:40px;padding:4px 9px;backdrop-filter:blur(8px)}
+.ibh-halo{opacity:.64}
+@media(max-width:760px){
+ .ibh-fullstage{display:none}
+ .ibh-model.ibh-ice-button{left:8%;top:5%;width:84%;height:86%}
+ .ibh-ice-button .ibh-mobile-ice{display:block;position:absolute;inset:9% 17%;clip-path:polygon(51% 0,70% 25%,82% 44%,100% 55%,78% 67%,85% 83%,51% 100%,17% 82%,19% 63%,0 53%,28% 30%);
+ background:linear-gradient(135deg,#e1fbff 3%,#a4ebf5 21%,#4b99bd 48%,#4267a2 67%,#162a66 100%);
+ filter:drop-shadow(0 15px 40px rgba(86,205,243,.55));transition:transform .5s,opacity .5s}
+ .ibh-fracture-1 .ibh-mobile-ice{transform:scale(1.035) rotate(5deg)}
+ .ibh-fracture-2 .ibh-mobile-ice{transform:scale(1.12) rotate(12deg);opacity:.74}
+ .ibh-fracture-3 .ibh-mobile-ice{transform:scale(1.6) rotate(30deg);opacity:0}
+}

@@ -53,7 +53,45 @@ export default function Portfolio() {
           <h2 className="section-title">Our Work</h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-7 lg:gap-10 items-start">
+        {/* Mobile: every case is a complete story, not a detached selector. */}
+        <div className="lg:hidden flex flex-col gap-12">
+          {projects.map((p,i)=>(
+            <article key={p.title} className="flex flex-col gap-5">
+              <div className="rounded-2xl p-5" style={{background:"rgba(83,74,183,.13)",border:"1px solid rgba(175,169,236,.25)"}}>
+                <span className="section-eyebrow">CASE STUDY {String(i+1).padStart(2,"0")}</span>
+                <h3 className="text-xl font-semibold mt-2" style={{color:"var(--snow)"}}>{p.title}</h3>
+                <p className="text-xs mt-1 uppercase tracking-wider" style={{color:"var(--aurora-teal)"}}>{p.category}</p>
+                <p className="text-sm font-medium mt-4" style={{color:"var(--aurora-teal)"}}>{p.result}</p>
+                <p className="text-sm mt-2 leading-relaxed" style={{color:"rgba(210,216,247,.78)"}}>{p.description}</p>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <span className="text-[10px] uppercase tracking-[.2em] font-semibold" style={{color:"var(--aurora-light)"}}>Mobile experience</span>
+                <div className="relative w-[min(68vw,235px)] aspect-[9/17] overflow-hidden rounded-[25px] p-[5px]" style={{background:"#141328",border:"2px solid rgba(160,166,239,.4)",boxShadow:"0 20px 50px rgba(0,0,0,.42)"}}>
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-16 h-3 rounded-full" style={{background:"#080718"}}/>
+                  <div className="relative w-full h-full overflow-hidden rounded-[19px]" style={{background:"#080718"}}>
+                    <Image src={p.mobile} alt={p.title+" — mobile website screenshot"} fill sizes="(max-width:767px) 235px, 235px" className="object-cover object-top mockup-pan-mobile"/>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <span className="text-[10px] uppercase tracking-[.2em] font-semibold" style={{color:"var(--aurora-light)"}}>Desktop experience</span>
+                <div className="w-full rounded-xl p-[5px] pb-3" style={{background:"#18162e",border:"1px solid rgba(175,169,236,.25)",boxShadow:"0 16px 40px rgba(0,0,0,.28)"}}>
+                  <div className="flex justify-center py-1.5"><span className="w-1 h-1 rounded-full" style={{background:"rgba(175,169,236,.5)"}}/></div>
+                  <div className="relative aspect-video overflow-hidden rounded-lg">
+                    <Image src={p.mockup} alt={p.title+" — desktop website screenshot"} fill sizes="(max-width:767px) 90vw, 650px" className="object-cover object-top mockup-pan"/>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <CrackLink href={p.url} target="_blank" rel="noopener noreferrer" className="flex-1 text-center py-3 rounded-full text-sm font-semibold" style={{background:"var(--aurora)",color:"var(--snow)"}}>View site ↗</CrackLink>
+                <CrackLink href="#contact" className="flex-1 text-center py-3 rounded-full text-sm font-semibold" style={{border:"1px solid rgba(175,169,236,.35)",color:"var(--aurora-light)"}}>Start a project →</CrackLink>
+              </div>
+            </article>
+          ))}
+          <a href="/portfolio" className="block text-center rounded-full py-4 text-sm font-semibold" style={{border:"1px solid rgba(175,169,236,.3)",color:"var(--aurora-light)"}}>See all our work →</a>
+        </div>
+
+        <div className="hidden lg:grid lg:grid-cols-5 gap-7 lg:gap-10 items-start">
           {/* Left — project list (2/5) */}
           <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-4">
             {projects.map((p, i) => (

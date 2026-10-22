@@ -282,7 +282,7 @@ export default function Services() {
   return (
     <section
       id="services"
-      className="relative overflow-hidden py-32"
+      className="relative overflow-hidden py-16 md:py-32"
       style={{ background: "var(--night)", minHeight: "100vh" }}
     >
       {/* Ambient */}
@@ -290,7 +290,7 @@ export default function Services() {
         background: "radial-gradient(ellipse 70% 50% at 50% 60%, rgba(83,74,183,0.07) 0%, transparent 70%)",
       }} />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6">
 
         {/* Header */}
         <motion.div
@@ -298,14 +298,14 @@ export default function Services() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="mb-16"
+          className="mb-10 md:mb-16"
         >
           <p className="section-eyebrow mb-4">What we build</p>
           <h2 className="section-title">Pick your package</h2>
         </motion.div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 items-stretch">
           {services.map((svc, i) => (
             <TiltCard
               key={svc.name}
@@ -322,7 +322,7 @@ export default function Services() {
 
               {/* Illustration area */}
               <div
-                className="relative shrink-0 overflow-hidden"
+                className="relative shrink-0 overflow-hidden svc-card-visual"
                 style={{
                   height: "200px",
                   borderBottom: `1px solid rgba(${svc.accentRgb},0.12)`,
@@ -335,7 +335,7 @@ export default function Services() {
               </div>
 
               {/* Content */}
-              <div className="flex flex-col flex-1 p-7 relative z-10">
+              <div className="flex flex-col flex-1 p-5 sm:p-7 relative z-10">
                 {/* Label */}
                 <div className="flex items-center gap-3 mb-4">
                   <span
@@ -412,7 +412,7 @@ export default function Services() {
         <motion.div
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6 rounded-2xl px-8 py-5 flex flex-col sm:flex-row items-center gap-4 sm:gap-8"
+          className="mt-6 rounded-2xl px-5 sm:px-8 py-5 flex flex-col sm:flex-row items-center gap-4 sm:gap-8"
           style={{ background: "rgba(93,202,165,0.06)", border: "1px solid rgba(93,202,165,0.18)" }}>
           <p className="text-xs font-semibold tracking-widest uppercase shrink-0" style={{ color: "rgba(93,202,165,0.7)" }}>
             Included in every package
@@ -441,7 +441,7 @@ export default function Services() {
         <motion.div
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-4 rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center"
+          className="mt-4 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row gap-5 sm:gap-6 items-start sm:items-center"
           style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(175,169,236,0.15)" }}>
           {/* Label */}
           <div className="shrink-0">

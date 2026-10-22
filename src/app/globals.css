@@ -127,3 +127,31 @@ small, caption, figcaption { font-weight: 400; }
     object-position: 50% 0%;
   }
 }
+
+/* Responsive visual hierarchy shared across the homepage. */
+@media (max-width: 767px) {
+  .section-title { font-size: clamp(1.95rem, 8vw, 2.55rem);line-height: 1.13;letter-spacing: -.035em; }
+  .section-subtitle { font-size: .96rem;line-height: 1.6; }
+  .section-eyebrow { font-size: .64rem;letter-spacing: .14em; }
+  body {overflow-x: clip;}
+}
+/* Desktop mockup floats over the screen. On phones the device belongs below it. */
+.portfolio-phone-preview {
+  right: -18px;
+  bottom: 24px;
+  width: 88px;
+  height: 188px;
+}
+@media(max-width:767px){
+ .portfolio-phone-preview {
+   position: relative!important;
+   right: auto;
+   bottom: auto;
+   width: 108px;
+   height: 229px;
+   margin: 15px auto 0;
+ }
+}
+@media(max-width:380px){
+ .portfolio-phone-preview{width:102px;height:217px;}
+}

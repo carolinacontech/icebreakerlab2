@@ -35,9 +35,10 @@ function RotatingProjectCard({
   // Respect reduced-motion preferences and pause when the card is hovered
   // or keyboard-focused, so visitors can inspect a specific project.
   if(paused||reduced)return;
+  const mobile=window.matchMedia("(max-width:760px)").matches;
   const interval=window.setInterval(()=>{
    if(document.visibilityState==="visible")setActive(current=>(current+1)%projects.length);
-  },position===0?5200:6300);
+  },mobile?(position===0?8500:9800):(position===0?5200:6300));
   return()=>window.clearInterval(interval);
  },[reveal,paused,reduced,position,projects.length]);
  const project=projects[active];

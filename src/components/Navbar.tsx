@@ -29,7 +29,7 @@ export default function Navbar() {
     // En la home el ScrollVideo ocupa 300vh, así que el navbar recién se activa
     // después. En el resto de páginas no existe: basta un scroll normal.
     const handler = () =>
-      setScrolled(window.scrollY > (isHome ? window.innerHeight * 2.8 : 40));
+      setScrolled(window.scrollY > 40);
     handler();
 
     // Lenis (smooth scroll) mueve la página sin emitir el evento `scroll` de
@@ -69,18 +69,18 @@ export default function Navbar() {
             ? "1px solid rgba(83,74,183,0.2)"
             : "1px solid rgba(175,169,236,0.22)",
           boxShadow: isHome ? "none" : "0 6px 28px rgba(0,0,0,0.55)",
-          opacity: scrolled ? 1 : 0,
+          opacity: scrolled || open ? 1 : 0,
           transition: "opacity 0.35s ease",
         }}
       />
-      <div className="relative max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="relative max-w-7xl mx-auto px-5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
         <a href="/" aria-label="The Icebreakerlab — Home">
           <Image
             src="/images/logo/logo.png"
             alt="The Icebreakerlab"
             width={224}
             height={44}
-            className="object-contain"
+            className="object-contain w-[180px] sm:w-[224px] h-auto"
           />
         </a>
 

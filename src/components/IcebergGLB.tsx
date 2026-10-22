@@ -130,6 +130,10 @@ out float vOpacity,vSeed;
 void main() {
   float t = max(uTimeSinceBreak,0.);
   vec3 p = aPoint;
+  vec3 impact = vec3(-.055,.13,.12);
+  float spread=uBurstStage<1.5?.23:(uBurstStage<2.5?.53:4.);
+  // The first taps kick dust from the stress point, not the entire iceberg.
+  float localFade = 1.-smoothstep(spread-.09,spread+.09,length(aPoint-impact));
   float angle = uYaw;
   p = vec3(p.x*cos(angle)+p.z*sin(angle),p.y,-p.x*sin(angle)+p.z*cos(angle));
   p *= 3.5;
@@ -145,7 +149,8 @@ void main() {
   float sizeFactor=uBurstStage<1.5?.46:(uBurstStage<2.5?.68:1.);
   gl_PointSize=clamp((2.6+aSeed*3.1)*sizeFactor*uPixelRatio*5.8/max(-p.z,1.),1.,9.);
   float life=uBurstStage<1.5?1.15:(uBurstStage<2.5?1.85:3.7);
-  vOpacity=(uTimeSinceBreak<0.?0.:(1.-smoothstep(life*.38,life,t)))*(1.-.55*aSeed);
+  vOpacity=(uTimeSinceBreak<0.?0.:(1.-smoothstep(life*.38,life,t)))*
+    (1.-.55*aSeed)*localFade;
   vSeed=aSeed;
 }`;
 
@@ -157,9 +162,12 @@ void main() {
   vec2 uv=gl_PointCoord*2.-1.;
   float r=length(uv);
   float sparkle=pow(max(0.,1.-r),2.2);
-  if(sparkle<.02 || vOpacity<=0.) discard;
+  float chip = max(abs(uv.x)*.55+abs(uv.y)*1.23,abs(uv.x)*1.13+abs(uv.y)*.33);
+  float shardShape = 1.-smoothstep(.60,1.04,chip);
+  float particle= vSeed>.66 ? shardShape : sparkle;
+  if(particle<.02 || vOpacity<=0.) discard;
   vec3 hue=mix(vec3(.28,.83,1.),vec3(.89,.77,1.),vSeed);
-  outColor=vec4(hue,sparkle*vOpacity*.8);
+  outColor=vec4(hue,particle*vOpacity*.86);
 }`;
 
 function parseGLB(data: ArrayBuffer): { json: GLB; binary: ArrayBuffer } {
@@ -226,7 +234,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
     const gl=canvas.getContext("webgl2",{alpha:true,antialias:true,premultipliedAlpha:false});
     if(!gl)return;
     const abort=new AbortController();
-    let disposed=false,raf=0,visible=true,lastStage=0,fractureAmount=0,burstStarted=-1;
+    let disposed=false,raf=0,visible=true,lastStage=0,fractureAmount=0,burstStarted=-1,burstStage=0;
     let resizeObserver:ResizeObserver|undefined,intersectionObserver:IntersectionObserver|undefined;
     const buffers:WebGLBuffer[]=[];
     const programs:WebGLProgram[]=[];
@@ -399,13 +407,16 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           scroll:loc(iceProgram,"uScroll"),aspect:loc(iceProgram,"uAspect"),
           brk:loc(iceProgram,"uBreak"),flight:loc(iceProgram,"uFlight"),
           placement:loc(iceProgram,"uPlacement"),
-          shard:loc(iceProgram,"uShard"),pivot:loc(iceProgram,"uPivot")
+          shard:loc(iceProgram,"uShard"),pivot:loc(iceProgram,"uPivot"),
+          damage:loc(iceProgram,"uDamageStage"),impact:loc(iceProgram,"uImpact"),
+          delay:loc(iceProgram,"uShardDelay"),spin:loc(iceProgram,"uShardSpin")
         };
         const ud={
           yaw:loc(dustProgram,"uYaw"),aspect:loc(dustProgram,"uAspect"),
           placement:loc(dustProgram,"uPlacement"),
           time:loc(dustProgram,"uTimeSinceBreak"),
-          ratio:loc(dustProgram,"uPixelRatio")
+          ratio:loc(dustProgram,"uPixelRatio"),
+          stage:loc(dustProgram,"uBurstStage")
         };
         let aspect=1,ratio=1;
         const resize=()=>{
@@ -431,10 +442,12 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           prev=ms;
           resize();
           const stage=stageRef.current;
-          if(stage===3&&lastStage!==3)burstStarted=ms;
-          if(stage===0&&lastStage!==0)burstStarted=-1;
+          if(stage!==lastStage){
+            burstStarted=stage===0?-1:ms;
+            burstStage=stage;
+          }
           lastStage=stage;
-          const target=[0,.035,.23,1][stage]??0;
+          const target=[0,.006,.028,1][stage]??0;
           fractureAmount+=(target-fractureAmount)*.065;
           const flight=stage===3&&burstStarted>=0?Math.min((ms-burstStarted)/1000,2.4):0;
           const p=motion.current;
@@ -451,10 +464,14 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           gl.uniform1f(ui.time,ms/1000);gl.uniform1f(ui.scroll,p.scroll);
           gl.uniform1f(ui.aspect,aspect);gl.uniform1f(ui.placement,placement);
           gl.uniform1f(ui.brk,fractureAmount);gl.uniform1f(ui.flight,flight);
+          gl.uniform1f(ui.damage,stage);
+          gl.uniform3fv(ui.impact,impact);
           for(const shard of shards) {
             if(!shard.count)continue;
             gl.uniform3fv(ui.shard,shard.direction);
             gl.uniform3fv(ui.pivot,shard.pivot);
+            gl.uniform1f(ui.delay,shard.delay);
+            gl.uniform1f(ui.spin,shard.spin);
             gl.drawElements(gl.TRIANGLES,shard.count,gl.UNSIGNED_INT,shard.offset);
           }
           gl.bindVertexArray(null);
@@ -465,6 +482,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
             gl.uniform1f(ud.placement,placement);
             gl.uniform1f(ud.time,(ms-burstStarted)/1000);
             gl.uniform1f(ud.ratio,ratio);
+            gl.uniform1f(ud.stage,burstStage);
             gl.drawArrays(gl.POINTS,0,pCount);
             gl.disable(gl.BLEND);gl.depthMask(true);gl.bindVertexArray(null);
           }

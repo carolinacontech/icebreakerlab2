@@ -1,19 +1,13 @@
 "use client";
-import Image from "next/image";
-import {useEffect,useRef} from "react";
+import {useEffect,useRef,useState} from "react";
 import {motion,useMotionValue,useReducedMotion,useScroll,useSpring,useTransform} from "framer-motion";
 import IcebergGLB,{type SceneMotion} from "./IcebergGLB";
 import "./hybrid-hero.css";
 
-function Preview({title,src,detail,kind}:{title:string;src:string;detail:string;kind:string}){
- return <a href="/portfolio" className={"ibh-preview "+kind} aria-label={"View the "+title+" website in our portfolio"}>
-  <span className="ibh-chrome"><span className="ibh-dotset"><i/><i/><i/></span><span>selected work / icebreakerlab</span><span>↗</span></span>
-  <span className="ibh-screen"><Image src={src} alt={"Design for "+title} fill sizes="(max-width: 760px) 210px, 360px" style={{objectFit:"cover",objectPosition:"top"}}/></span>
-  <span className="ibh-preview-label"><strong>{title}</strong><small>{detail}</small></span>
- </a>;
-}
 export default function HybridHero(){
  const section=useRef<HTMLElement>(null);
+ const [fracture,setFracture]=useState(0);
+ const shatter=()=>setFracture(v=>Math.min(3,v+1));
  const coordinates=useRef<SceneMotion>({x:0,y:0,scroll:0});
  const reduced=useReducedMotion();
  const mx=useMotionValue(0),my=useMotionValue(0);
@@ -40,6 +34,7 @@ export default function HybridHero(){
   }}
   onPointerLeave={()=>{mx.set(0);my.set(0);coordinates.current.x=0;coordinates.current.y=0;}}>
   <div className="ibh-atmosphere" aria-hidden="true"/>
+  <div className="ibh-fullstage"><IcebergGLB motion={coordinates} fracture={fracture}/></div>
   <div className="ibh-grid">
    <motion.div className="ibh-copy" style={reduced?{}:{y:textY}}>
     <div className="ibh-eyebrow"><span className="ibh-glowdot"/> WEB DESIGN STUDIO <span>·</span> SEO <span>·</span> STRATEGY</div>
@@ -50,10 +45,12 @@ export default function HybridHero(){
    </motion.div>
    <motion.div className="ibh-visual" style={reduced?{}:{y:visualY,rotateX:rx,rotateY:ry}}>
     <div className="ibh-halo" aria-hidden="true"/>
-    <div className="ibh-model"><IcebergGLB motion={coordinates}/></div>
-    <Preview title="NODO Academy" detail="WEB DESIGN · SEO" src="/images/portfolio/mockups/nodo-academy.png" kind="ibh-primary"/>
-    <Preview title="Market Open Media" detail="WEB DESIGN · STRATEGY" src="/images/portfolio/mockups/market-open-media.png" kind="ibh-secondary"/>
-    <div className="ibh-quality"><span>✦</span><div><strong>Built for impact</strong><small>Design · SEO · Speed</small></div><span>↗</span></div>
+    <button type="button" className={"ibh-model ibh-ice-button ibh-fracture-"+fracture} onClick={fracture===3?()=>setFracture(0):shatter} aria-label={fracture===3?"Rebuild the iceberg":"Break the iceberg, stage "+(fracture+1)+" of 3"}><span className="ibh-mobile-ice" aria-hidden="true"/></button>
+    <div className="ibh-ice-hint" aria-live="polite">
+      <span className="ibh-ice-count">0{fracture} / 03</span>
+      <span>{fracture===0?"CLICK THE ICEBERG TO BREAK THE ICE":fracture===1?"THE FIRST CRACK — CLICK AGAIN":fracture===2?"IT'S BREAKING — ONE MORE CLICK":"THE ICE IS BROKEN"}</span>
+      {fracture===3&&<button type="button" onClick={()=>setFracture(0)}>REBUILD ↻</button>}
+    </div>
    </motion.div>
   </div>
   <a href="#services" className="ibh-scroll"><span/>SCROLL TO EXPLORE</a>

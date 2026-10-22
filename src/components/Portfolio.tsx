@@ -41,21 +41,21 @@ export default function Portfolio() {
   const [active, setActive] = useState(0);
 
   return (
-    <section id="portfolio" className="relative py-24 overflow-hidden" style={{ background: "var(--night)" }}>
+    <section id="portfolio" className="relative py-16 sm:py-24 overflow-hidden" style={{ background: "var(--night)" }}>
       <div className="absolute inset-0 z-0" style={{
         background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(83,74,183,0.12) 0%, transparent 70%)"
       }} />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 w-full">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center mb-16">
+          viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center mb-9 sm:mb-16">
           <p className="section-eyebrow mb-4">Case studies</p>
           <h2 className="section-title">Our Work</h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-7 lg:gap-10 items-start">
           {/* Left — project list (2/5) */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-4">
             {projects.map((p, i) => (
               <motion.div key={p.title}
                 initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }}
@@ -66,7 +66,7 @@ export default function Portfolio() {
                 tabIndex={0}
                 aria-pressed={active === i}
                 whileHover={{ x: 6 }}
-                className="rounded-2xl p-6 relative overflow-hidden"
+                className="rounded-2xl p-5 sm:p-6 relative overflow-hidden"
                 style={{
                   background: active === i ? "rgba(83,74,183,0.25)" : "rgba(10,13,31,0.5)",
                   border: active === i ? "1px solid rgba(175,169,236,0.5)" : "1px solid rgba(83,74,183,0.2)",
@@ -115,7 +115,7 @@ export default function Portfolio() {
           {/* Right — mockup preview (3/5) */}
           <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }} transition={{ duration: 0.7 }}
-            className="lg:col-span-3 flex flex-col gap-4"
+            className="lg:col-span-3 flex flex-col gap-4 min-w-0 w-full max-w-[650px] mx-auto"
             style={{ overflow: "visible", pointerEvents: "none" }}>
           {/* iMac-style monitor mockup */}
           <div className="relative" style={{ overflow: "visible" }}>
@@ -165,8 +165,7 @@ export default function Portfolio() {
 
             {/* iPhone mockup — bottom-right of monitor, floating */}
             <motion.div
-              className="absolute z-20"
-              style={{ bottom: "24px", right: "-18px", width: "88px", height: "188px" }}
+              className="portfolio-phone-preview absolute z-20"
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
 
@@ -228,7 +227,7 @@ export default function Portfolio() {
           </div>
 
           {/* Buttons below mockup */}
-          <div className="flex gap-3 pt-6" style={{ pointerEvents: "auto" }}>
+          <div className="flex flex-wrap gap-3 pt-4 sm:pt-6" style={{ pointerEvents: "auto" }}>
             <CrackLink href={projects[active].url} target="_blank" rel="noopener noreferrer"
               className="px-6 py-3 rounded-full text-sm font-semibold transition-transform hover:scale-105"
               style={{ background: "var(--aurora)", color: "var(--snow)", boxShadow: "0 0 24px rgba(83,74,183,0.4)" }}>

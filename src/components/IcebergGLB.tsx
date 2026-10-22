@@ -417,6 +417,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
     <div className="ibh-fullscene" role="img" aria-label="Sculptural iceberg that shatters into flying 3D fragments">
       <canvas ref={canvasRef} aria-hidden="true" className="ibh-fullscene-canvas"
         style={{opacity:ready?1:0}} />
+      {!ready&&<div className="ibh-scene-fallback" aria-hidden="true" />}
     </div>
   );
 }

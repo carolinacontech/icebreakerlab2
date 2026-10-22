@@ -24,7 +24,7 @@ export default function About() {
   const bgY = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
 
   return (
-    <section id="about" ref={ref} className="relative py-24 overflow-hidden">
+    <section id="about" ref={ref} className="relative py-16 sm:py-24 overflow-hidden">
       <motion.div className="absolute inset-0 z-0" style={{ y: bgY, scale: 1.2 }}>
         <Image src="/images/about/silhouette.png" alt="Arctic aurora silhouette" fill className="object-cover object-center" quality={85} />
       </motion.div>
@@ -32,9 +32,9 @@ export default function About() {
         background: "linear-gradient(135deg, rgba(10,13,31,0.88) 0%, rgba(38,33,92,0.55) 50%, rgba(10,13,31,0.88) 100%)"
       }} />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 w-full">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.9 }}>
             <p className="section-eyebrow mb-4">Who we are</p>
@@ -50,13 +50,13 @@ export default function About() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 min-[390px]:grid-cols-2 gap-3 sm:gap-4">
             {values.map((v, i) => (
               <motion.div key={v.title}
                 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.12, duration: 0.6 }}
                 whileHover={{ scale: 1.03, y: -4 }}
-                className="rounded-2xl p-6"
+                className="rounded-2xl p-4 sm:p-6"
                 style={{ background: "rgba(10,13,31,0.55)", border: "1px solid rgba(83,74,183,0.25)", backdropFilter: "blur(20px)" }}>
                 <div className="mb-3" style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "rgba(93,202,165,0.1)", border: "1px solid rgba(93,202,165,0.2)" }}>
                     <ValueIcon type={v.icon} />

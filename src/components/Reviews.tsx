@@ -9,7 +9,7 @@ export default async function Reviews() {
   const stars = (n: number) => "★".repeat(Math.round(n)) + "☆".repeat(5 - Math.round(n));
 
   return (
-    <section className="relative py-24" style={{ background: "var(--night)" }}>
+    <section className="relative py-16 sm:py-24" style={{ background: "var(--night)" }}>
       <div
         className="absolute inset-0 z-0"
         style={{
@@ -17,8 +17,8 @@ export default async function Reviews() {
             "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(93,202,165,0.08) 0%, transparent 70%)",
         }}
       />
-      <div className="relative z-10 max-w-6xl mx-auto px-6">
-        <div className="text-center mb-14">
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-6">
+        <div className="text-center mb-10 sm:mb-14">
           <p className="section-eyebrow mb-4">What clients say</p>
           <h2 className="section-title mb-5">Reviewed on Google</h2>
           <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -34,11 +34,11 @@ export default async function Reviews() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {data.reviews.slice(0, 3).map((r, i) => (
             <figure
               key={i}
-              className="rounded-2xl p-6 flex flex-col gap-4"
+              className="rounded-2xl p-5 sm:p-6 flex flex-col gap-4"
               style={{
                 background: "rgba(83,74,183,0.07)",
                 border: "1px solid rgba(83,74,183,0.2)",

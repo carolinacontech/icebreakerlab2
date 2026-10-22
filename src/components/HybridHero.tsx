@@ -1,18 +1,52 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
+import Image from "next/image";
 import {motion,useMotionValue,useReducedMotion,useScroll,useSpring,useTransform} from "framer-motion";
 import IcebergGLB,{type SceneMotion} from "./IcebergGLB";
 import "./hybrid-hero.css";
 
+const showcasedProjects=[
+ {name:"NODO Academy",detail:"WEB DESIGN · SEO",src:"/images/portfolio/mockups/nodo-academy.png",className:"ibh-primary"},
+ {name:"Market Open Media",detail:"WEB DESIGN · STRATEGY",src:"/images/portfolio/mockups/market-open-media.png",className:"ibh-secondary"}
+] as const;
+
+function WebsiteReveal({reveal}:{reveal:boolean}){
+ return <div className="ibh-reveal-layer" aria-live="off">
+  {showcasedProjects.map((project,i)=><motion.a
+   key={project.name}
+   href="/portfolio"
+   className={"ibh-preview ibh-reveal-card "+project.className}
+   aria-label={"View "+project.name+" in our portfolio"}
+   initial={false}
+   animate={reveal?{opacity:1,x:0,y:0,scale:1,filter:"blur(0px)",pointerEvents:"auto"}:
+       {opacity:0,x:i===0?76:-70,y:i===0?-24:48,scale:.88,filter:"blur(8px)",pointerEvents:"none"}}
+   transition={{duration:.72,delay:reveal?i*.17:0,ease:[.2,.8,.2,1]}}
+   tabIndex={reveal?0:-1}
+   aria-hidden={!reveal}
+  >
+   <span className="ibh-chrome"><span className="ibh-dotset"><i/><i/><i/></span><span>SELECTED WORK / ICEBREAKERLAB</span><span>↗</span></span>
+   <span className="ibh-screen"><Image src={project.src} alt={"Website preview for "+project.name} fill sizes="(max-width:760px) 78vw, 360px" style={{objectFit:"cover",objectPosition:"top"}} /></span>
+   <span className="ibh-preview-label"><strong>{project.name}</strong><small>{project.detail}</small></span>
+  </motion.a>)}
+ </div>;
+}
+
 export default function HybridHero(){
  const section=useRef<HTMLElement>(null);
  const [fracture,setFracture]=useState(0);
+ const [reveal,setReveal]=useState(false);
+ const restart=()=>{setReveal(false);setFracture(0);};
  const shatter=()=>setFracture(v=>Math.min(3,v+1));
  const coordinates=useRef<SceneMotion>({x:0,y:0,scroll:0});
  const reduced=useReducedMotion();
  const mx=useMotionValue(0),my=useMotionValue(0);
  const x=useSpring(mx,{stiffness:45,damping:20}),y=useSpring(my,{stiffness:45,damping:20});
  const ry=useTransform(x,[-1,1],[-7,7]),rx=useTransform(y,[-1,1],[5,-5]);
+ useEffect(()=>{
+  if(fracture!==3)return;
+  const timer=window.setTimeout(()=>setReveal(true),reduced?250:1550);
+  return()=>window.clearTimeout(timer);
+ },[fracture,reduced]);
  const {scrollYProgress}=useScroll({target:section,offset:["start start","end start"]});
  const visualY=useTransform(scrollYProgress,[0,1],[0,75]);
  const textY=useTransform(scrollYProgress,[0,1],[0,-35]);
@@ -45,11 +79,12 @@ export default function HybridHero(){
    </motion.div>
    <motion.div className="ibh-visual" style={reduced?{}:{y:visualY,rotateX:rx,rotateY:ry}}>
     <div className="ibh-halo" aria-hidden="true"/>
-    <button type="button" className={"ibh-model ibh-ice-button ibh-fracture-"+fracture} onClick={fracture===3?()=>setFracture(0):shatter} aria-label={fracture===3?"Rebuild the iceberg":"Break the iceberg, stage "+(fracture+1)+" of 3"}><span className="ibh-mobile-ice" aria-hidden="true"/></button>
+    <button type="button" className={"ibh-model ibh-ice-button ibh-fracture-"+fracture} onClick={fracture===3?restart:shatter} disabled={reveal} aria-label={fracture===3?"Rebuild the iceberg":"Break the iceberg, stage "+(fracture+1)+" of 3"} /> 
+    <WebsiteReveal reveal={reveal}/>
     <div className="ibh-ice-hint" aria-live="polite">
       <span className="ibh-ice-count">0{fracture} / 03</span>
-      <span>{fracture===0?"CLICK THE ICEBERG TO BREAK THE ICE":fracture===1?"THE FIRST CRACK — CLICK AGAIN":fracture===2?"IT'S BREAKING — ONE MORE CLICK":"THE ICE IS BROKEN"}</span>
-      {fracture===3&&<button type="button" onClick={()=>setFracture(0)}>REBUILD ↻</button>}
+      <span>{fracture===0?"CLICK THE ICEBERG TO BREAK THE ICE":fracture===1?"THE FIRST CRACK — CLICK AGAIN":fracture===2?"IT'S BREAKING — ONE MORE CLICK":reveal?"OUR WORK, REVEALED":"BREAKING THE ICE..."}</span>
+      {fracture===3&&<button type="button" onClick={restart}>REBUILD ↻</button>}
     </div>
    </motion.div>
   </div>

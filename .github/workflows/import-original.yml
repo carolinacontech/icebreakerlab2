@@ -1,0 +1,37 @@
+name: Import existing Icebreakerlab source
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - ".github/workflows/import-original.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  import-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out destination branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          persist-credentials: true
+      - name: Clone existing source repository
+        run: git clone --depth 1 https://github.com/carolinacontech/icebreakerlab.git /tmp/icebreakerlab-source
+      - name: Import Next.js source and assets
+        run: |
+          rsync -a /tmp/icebreakerlab-source/ ./ \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="README.md" \
+            --exclude="HERO-REDESIGN.md" \
+            --exclude="ICEBERG-3D.md"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to import."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "chore: import existing Icebreakerlab Next.js source"
+          git push origin HEAD:develop

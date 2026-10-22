@@ -1,33 +1,104 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
 import Image from "next/image";
-import {motion,useMotionValue,useReducedMotion,useScroll,useSpring,useTransform} from "framer-motion";
+import {AnimatePresence,motion,useMotionValue,useReducedMotion,useScroll,useSpring,useTransform} from "framer-motion";
 import IcebergGLB,{type SceneMotion} from "./IcebergGLB";
 import "./hybrid-hero.css";
 
-const showcasedProjects=[
- {name:"NODO Academy",detail:"WEB DESIGN · SEO",src:"/images/portfolio/mockups/nodo-academy.png",className:"ibh-primary"},
- {name:"Market Open Media",detail:"WEB DESIGN · STRATEGY",src:"/images/portfolio/mockups/market-open-media.png",className:"ibh-secondary"}
-] as const;
+type Project = {name:string;detail:string;src:string};
 
-function WebsiteReveal({reveal}:{reveal:boolean}){
- return <div className="ibh-reveal-layer" aria-live="off">
-  {showcasedProjects.map((project,i)=><motion.a
-   key={project.name}
+// Exactly two fixed floating cards; each cycles through its own two projects.
+const portfolioPairs:ReadonlyArray<ReadonlyArray<Project>>=[
+ [
+  {name:"NODO Academy",detail:"WEB DESIGN · SEO",src:"/images/portfolio/mockups/nodo-academy.png"},
+  {name:"Las Marías",detail:"E-COMMERCE · ONLINE STORE",src:"/images/portfolio/mockups/las-marias-market.jpg"}
+ ],
+ [
+  {name:"Market Open Media",detail:"WEB DESIGN · STRATEGY",src:"/images/portfolio/mockups/market-open-media.png"},
+  {name:"EVA Shoes",detail:"BRANDING · WEB EXPERIENCE",src:"/images/portfolio/mockups/eva-shoes.png"}
+ ]
+];
+
+function RotatingProjectCard({
+ projects,position,reveal,prepare,reduced
+}:{
+ projects:ReadonlyArray<Project>;
+ position:number;
+ reveal:boolean;
+ prepare:boolean;
+ reduced:boolean;
+}){
+ const [active,setActive]=useState(0);
+ const [paused,setPaused]=useState(false);
+ useEffect(()=>{
+  if(!reveal){setActive(0);return;}
+  // Respect reduced-motion preferences and pause when the card is hovered
+  // or keyboard-focused, so visitors can inspect a specific project.
+  if(paused||reduced)return;
+  const interval=window.setInterval(()=>{
+   if(document.visibilityState==="visible")setActive(current=>(current+1)%projects.length);
+  },position===0?5200:6300);
+  return()=>window.clearInterval(interval);
+ },[reveal,paused,reduced,position,projects.length]);
+ const project=projects[active];
+ return <motion.a
    href="/portfolio"
-   className={"ibh-preview ibh-reveal-card "+project.className}
+   className={"ibh-preview ibh-reveal-card "+(position===0?"ibh-primary":"ibh-secondary")}
    aria-label={"View "+project.name+" in our portfolio"}
-   initial={false}
-   animate={reveal?{opacity:1,x:0,y:0,scale:1,filter:"blur(0px)",pointerEvents:"auto"}:
-       {opacity:0,x:i===0?76:-70,y:i===0?-24:48,scale:.88,filter:"blur(8px)",pointerEvents:"none"}}
-   transition={{duration:.72,delay:reveal?i*.17:0,ease:[.2,.8,.2,1]}}
-   tabIndex={reveal?0:-1}
    aria-hidden={!reveal}
-  >
-   <span className="ibh-chrome"><span className="ibh-dotset"><i/><i/><i/></span><span>SELECTED WORK / ICEBREAKERLAB</span><span>↗</span></span>
-   <span className="ibh-screen"><Image src={project.src} alt={"Website preview for "+project.name} fill sizes="(max-width:760px) 78vw, 360px" style={{objectFit:"cover",objectPosition:"top"}} /></span>
-   <span className="ibh-preview-label"><strong>{project.name}</strong><small>{project.detail}</small></span>
-  </motion.a>)}
+   tabIndex={reveal?0:-1}
+   onMouseEnter={()=>setPaused(true)}
+   onMouseLeave={()=>setPaused(false)}
+   onFocus={()=>setPaused(true)}
+   onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget))setPaused(false);}}
+   initial={false}
+   animate={reveal
+    ? {opacity:1,x:0,y:0,scale:1,filter:"blur(0px)",pointerEvents:"auto"}
+    : {opacity:0,x:position===0?76:-70,y:position===0?-24:48,scale:.88,filter:"blur(8px)",pointerEvents:"none"}}
+   transition={{duration:reduced?0:.72,delay:reveal&&!reduced?position*.17:0,ease:[.2,.8,.2,1]}}
+ >
+  <span className="ibh-chrome">
+   <span className="ibh-dotset" aria-hidden="true"><i/><i/><i/></span>
+   <span>SELECTED WORK / ICEBREAKERLAB</span>
+   <span className="ibh-card-position">{String(active+1).padStart(2,"0")} / {String(projects.length).padStart(2,"0")}</span>
+  </span>
+  <AnimatePresence initial={false}>
+   {prepare&&<motion.span
+    key={project.name}
+    className="ibh-card-swap"
+    initial={reduced?false:{opacity:0,y:12,scale:1.025,filter:"blur(6px)"}}
+    animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
+    exit={reduced?{opacity:0}:{opacity:0,y:-12,scale:.985,filter:"blur(6px)"}}
+    transition={{duration:reduced?0:.46,ease:[.25,.75,.25,1]}}
+   >
+    <span className="ibh-screen">
+     <Image
+      src={project.src}
+      alt={"Website preview for "+project.name}
+      fill
+      loading={active===0?"eager":"lazy"}
+      sizes="(max-width:760px) 78vw, (max-width:1150px) 34vw, 390px"
+      style={{objectFit:"cover",objectPosition:"top"}}
+     />
+    </span>
+    <span className="ibh-preview-label">
+     <strong>{project.name}</strong><small>{project.detail}</small>
+    </span>
+   </motion.span>}
+  </AnimatePresence>
+ </motion.a>;
+}
+
+function WebsiteReveal({reveal,prepare,reduced}:{reveal:boolean;prepare:boolean;reduced:boolean}){
+ return <div className="ibh-reveal-layer" aria-live="off">
+  {portfolioPairs.map((projects,index)=><RotatingProjectCard
+   key={index}
+   projects={projects}
+   position={index}
+   reveal={reveal}
+   prepare={prepare}
+   reduced={reduced}
+  />)}
  </div>;
 }
 
@@ -80,7 +151,7 @@ export default function HybridHero(){
    <motion.div className="ibh-visual" style={reduced?{}:{y:visualY,rotateX:rx,rotateY:ry}}>
     <div className="ibh-halo" aria-hidden="true"/>
     <button type="button" className={"ibh-model ibh-ice-button ibh-fracture-"+fracture} onClick={fracture===3?restart:shatter} disabled={reveal} aria-label={fracture===3?"Rebuild the iceberg":"Break the iceberg, stage "+(fracture+1)+" of 3"} /> 
-    <WebsiteReveal reveal={reveal}/>
+    <WebsiteReveal reveal={reveal} prepare={fracture>=2} reduced={Boolean(reduced)}/>
     <div className="ibh-ice-hint" aria-live="polite">
       <span className="ibh-ice-count">0{fracture} / 03</span>
       <span>{fracture===0?"CLICK THE ICEBERG TO BREAK THE ICE":fracture===1?"THE FIRST CRACK — CLICK AGAIN":fracture===2?"IT'S BREAKING — ONE MORE CLICK":reveal?"OUR WORK, REVEALED":"BREAKING THE ICE..."}</span>

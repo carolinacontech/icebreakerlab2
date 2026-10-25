@@ -12,7 +12,7 @@ type Project = {name:string;detail:string;src:string;mobileSrc?:string};
 const portfolioPairs:ReadonlyArray<ReadonlyArray<Project>>=[
  [
   {name:"Las Marías",detail:"E-COMMERCE · ONLINE STORE",src:"/images/portfolio/mockups/las-marias-market.jpg"},
-  {name:"EVA Shoes",detail:"BRANDING · WEB EXPERIENCE",src:"/images/portfolio/mockups/eva-shoes.png"}
+  {name:"EVA Shoes",detail:"BRANDING · WEB EXPERIENCE",src:"/images/portfolio/mockups/eva-shoes-2026.webp"}
  ],
  [
   {name:"NODO Academy",detail:"WEB DESIGN · SEO",src:"/images/portfolio/mockups/nodo-academy.png",mobileSrc:"/images/portfolio/mockups/nodo-academy-mobile.png"},

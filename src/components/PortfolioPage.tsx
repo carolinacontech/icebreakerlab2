@@ -12,7 +12,7 @@ const projects = [
     category: "E-commerce / Footwear",
     headline: "More than shoes. A brighter you.",
     tags: ["E-commerce", "Branding", "Conversion"],
-    img: "/images/portfolio/mockups/eva-shoes.png",
+    img: "/images/portfolio/mockups/eva-shoes-2026.webp",
     w: 1122,
     h: 1402,
     color: "#F0121C",

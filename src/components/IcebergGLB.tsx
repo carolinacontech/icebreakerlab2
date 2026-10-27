@@ -423,7 +423,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
         let aspect=1,ratio=1;
         const resize=()=>{
           const rect=canvas.getBoundingClientRect();
-          ratio=Math.min(window.devicePixelRatio||1,1.5);
+          ratio=Math.min(window.devicePixelRatio||1,window.innerWidth<=760?1:1.5);
           const width=Math.max(1,Math.round(rect.width*ratio));
           const height=Math.max(1,Math.round(rect.height*ratio));
           if(canvas.width!==width||canvas.height!==height) {
@@ -455,7 +455,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           const p=motion.current;
           yaw+=(.27+p.x*.19-yaw)*.065;
           pitch+=(-.06-p.y*.12+p.scroll*.12-pitch)*.06;
-          const placement=(aspect*5.85/2.22)*.49;
+          const placement=window.innerWidth<=760?0:(aspect*5.85/2.22)*.49;
           gl.viewport(0,0,canvas.width,canvas.height);
           gl.clearColor(0,0,0,0);
           gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);

@@ -230,7 +230,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
   useEffect(()=>{stageRef.current=fracture;},[fracture]);
   useEffect(()=>{
     const canvas=canvasRef.current;
-    if(!canvas || window.matchMedia("(max-width:760px), (prefers-reduced-motion:reduce)").matches) return;
+    if(!canvas || window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
     const gl=canvas.getContext("webgl2",{alpha:true,antialias:true,premultipliedAlpha:false});
     if(!gl)return;
     const abort=new AbortController();

@@ -49,7 +49,7 @@ void main() {
   q = pivot + twist * (q - pivot);
   q *= 3.5;
   // Small fractures first; staggered, nonuniform separation only on final impact.
-  q += rotation * uShard * (uBreak*.018 + released*2.55 + uFlight*released*.75);
+  q += rotation * uShard * (uBreak*.018 + released*.52 + uFlight*released*.22);
   q.x += uPlacement;
   q.y += sin(uTime * .57) * .048 - uScroll * .18;
   q.z -= 5.85;
@@ -112,9 +112,9 @@ void main() {
   float reach = uDamageStage < 1.5 ? .34 : (uDamageStage < 2.5 ? .72 : 1.8);
   float stressFront = 1.-smoothstep(reach-.12, reach+.055, distance(vLocal,uImpact));
   float grain = .72+.28*sin(vLocal.x*103.+vLocal.y*81.+vLocal.z*43.);
-  float fissure = smoothstep(.20,.82,vCrack) * stressFront *
+  float fissure = smoothstep(.08,.62,vCrack) * stressFront *
                   clamp(uDamageStage,0.,1.) * grain;
-  color = mix(color,vec3(.025,.10,.17),fissure*.83);
+  color = mix(color,vec3(.025,.10,.17),fissure*.92);
   color += vec3(.32,.79,.95)*pow(fissure,2.)*.35;
   color += vec3(.14,.53,.74)*uBreak*.14;
   color = tonemap(color*1.18);
@@ -447,9 +447,9 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
             burstStage=stage;
           }
           lastStage=stage;
-          const target=[0,.006,.028,1][stage]??0;
+          const target=[0,.004,.014,.22][stage]??0;
           fractureAmount+=(target-fractureAmount)*.065;
-          const flight=stage===3&&burstStarted>=0?Math.min((ms-burstStarted)/1000,2.4):0;
+          const flight=stage===3&&burstStarted>=0?Math.min((ms-burstStarted)/1000,.85):0;
           const p=motion.current;
           yaw+=(.27+p.x*.19-yaw)*.065;
           pitch+=(-.06-p.y*.12+p.scroll*.12-pitch)*.06;

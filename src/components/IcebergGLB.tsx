@@ -118,7 +118,9 @@ void main() {
   color += vec3(.32,.79,.95)*pow(fissure,2.)*.35;
   color += vec3(.14,.53,.74)*uBreak*.14;
   color = tonemap(color*1.18);
-  outColor = vec4(pow(clamp(color,0.,1.),vec3(1./2.2)),1.);
+  float frost = pow(1.-clamp(dot(n,view),0.,1.),2.5);
+  float clarity = smoothstep(.30,.90,iceTexture);
+  outColor = vec4(pow(clamp(color,0.,1.),vec3(1./2.2)),clamp(.90-clarity*.19+frost*.09,.69,1.));
 }`;
 
 const DUST_VERTEX = `#version 300 es
@@ -457,7 +459,7 @@ export default function IcebergGLB({motion,fracture}:{motion:React.RefObject<Sce
           gl.viewport(0,0,canvas.width,canvas.height);
           gl.clearColor(0,0,0,0);
           gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-          gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);
+          gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
           gl.useProgram(iceProgram);gl.bindVertexArray(iceVAO);
           gl.uniform3fv(ui.center,center);
           gl.uniform1f(ui.yaw,yaw);gl.uniform1f(ui.pitch,pitch);

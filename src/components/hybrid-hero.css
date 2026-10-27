@@ -68,7 +68,7 @@
 .ibh-ice-hint{bottom:-1%;background:rgba(7,13,28,.48);border-radius:40px;padding:4px 9px;backdrop-filter:blur(8px)}
 .ibh-halo{opacity:.64}
 @media(max-width:760px){
- .ibh-fullstage{display:none}
+ .ibh-fullstage{display:block}
  .ibh-model.ibh-ice-button{left:8%;top:5%;width:84%;height:86%}
  .ibh-ice-button .ibh-mobile-ice{display:block;position:absolute;inset:9% 17%;clip-path:polygon(51% 0,70% 25%,82% 44%,100% 55%,78% 67%,85% 83%,51% 100%,17% 82%,19% 63%,0 53%,28% 30%);
  background:linear-gradient(135deg,#e1fbff 3%,#a4ebf5 21%,#4b99bd 48%,#4267a2 67%,#162a66 100%);
@@ -82,3 +82,19 @@
  clip-path:polygon(49% 0,68% 22%,87% 43%,100% 54%,79% 64%,90% 81%,51% 100%,17% 82%,13% 59%,0 52%,27% 31%);
  background:linear-gradient(130deg,#efffff 0%,#9cdded 29%,#4e93c9 54%,#162d6e 83%);
  opacity:.8;filter:drop-shadow(0 0 32px rgba(134,235,252,.3));pointer-events:none}
+
+/* Mobile-first cinematic entrance: the 3D scene leads, copy follows. */
+@media(max-width:760px){
+ .ibh{padding:70px 0 70px;display:block}
+ .ibh-grid{display:flex;flex-direction:column;padding:0 20px}
+ .ibh-visual{order:-1;height:min(78svh,610px);min-height:410px;width:100%;margin:0 auto 14px}
+ .ibh-copy{order:2}
+ .ibh-copy h1{font-size:clamp(2.65rem,10vw,4.6rem)}
+ .ibh-fullstage{display:block;z-index:1}
+ .ibh-fullscene{inset:0}
+ .ibh-scene-fallback{left:18%;top:7%;width:64%;height:63%}
+ .ibh-ice-button .ibh-mobile-ice{display:none}
+ .ibh-model.ibh-ice-button{left:7%;top:2%;width:86%;height:76%;z-index:4}
+ .ibh-ice-hint{bottom:5%;z-index:5}
+ .ibh-scroll{display:none}
+}

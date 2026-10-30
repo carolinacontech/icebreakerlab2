@@ -25,6 +25,11 @@ const LOADER_MIN_MS = 1500;
 // El celular reemplaza al logo de la plantilla: mide PHONE_TO_ANCHOR veces el
 // alto que tenía el logo, sin pasar de una fracción del alto de la pantalla.
 const PHONE_TO_ANCHOR = 1.35;
+// De lejos se ve 15% más chico; la reducción se desvanece hasta el tamaño final.
+const PHONE_FAR_FACTOR = 0.85;
+const ANCHOR_HEIGHTS = ANCHORS.map((a) => a[2]);
+const ANCHOR_MIN = Math.min(...ANCHOR_HEIGHTS);
+const ANCHOR_MAX = Math.max(...ANCHOR_HEIGHTS);
 const PHONE_MAX_VH = { wide: 0.56, narrow: 0.44 };
 // Alto de la carcasa en CSS a escala 1 (ver .ic-phone-shell).
 const PHONE_BASE_HEIGHT = 530;
@@ -130,7 +135,9 @@ export default function IceCaveScroll() {
       const [ax, ay, ah] = ANCHORS[shown];
       const p = renderer.project(ax, ay, 0);
       const maxVh = window.innerWidth <= 900 ? PHONE_MAX_VH.narrow : PHONE_MAX_VH.wide;
-      const height = Math.min(ah * p.scale * PHONE_TO_ANCHOR, window.innerHeight * maxVh);
+      const near = clamp((ah - ANCHOR_MIN) / (ANCHOR_MAX - ANCHOR_MIN));
+      const factor = PHONE_TO_ANCHOR * lerp(PHONE_FAR_FACTOR, 1, near);
+      const height = Math.min(ah * p.scale * factor, window.innerHeight * maxVh);
       const scale = height / PHONE_BASE_HEIGHT;
       el.style.transform = `translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%) scale(${scale})`;
       // De lejos es solo un brillo: el pie de foto y el clic llegan al acercarse.

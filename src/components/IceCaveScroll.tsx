@@ -31,6 +31,8 @@ const ANCHOR_HEIGHTS = ANCHORS.map((a) => a[2]);
 const ANCHOR_MIN = Math.min(...ANCHOR_HEIGHTS);
 const ANCHOR_MAX = Math.max(...ANCHOR_HEIGHTS);
 const PHONE_MAX_VH = { wide: 0.56, narrow: 0.44 };
+// Desde aquí giraba el logo en el video original: ahí empieza a girar el celular.
+const SPIN_FROM_FRAME = 100;
 // Alto de la carcasa en CSS a escala 1 (ver .ic-phone-shell).
 const PHONE_BASE_HEIGHT = 530;
 
@@ -82,6 +84,7 @@ export default function IceCaveScroll() {
   const phoneRef = useRef<HTMLDivElement>(null);
   const [loader, setLoader] = useState<"loading" | "burning" | "done" | "error">("loading");
   const [introReady, setIntroReady] = useState(false);
+  const [phoneSpinning, setPhoneSpinning] = useState(false);
 
   useEffect(() => {
     const scene = sceneRef.current!;
@@ -102,6 +105,7 @@ export default function IceCaveScroll() {
     let cancelled = false;
     let target = 0;
     let progress = 0;
+    let spinning = false;
 
     // Se mide en cada frame en vez de escuchar `scroll`: Lenis mueve la página
     // sin que el evento llegue siempre a tiempo.
@@ -142,6 +146,11 @@ export default function IceCaveScroll() {
       el.style.transform = `translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%) scale(${scale})`;
       // De lejos es solo un brillo: el pie de foto y el clic llegan al acercarse.
       el.style.setProperty("--near", String(clamp((scale - 0.45) / 0.25)));
+      // Solo se avisa a React al cruzar el umbral, no en cada frame.
+      if (shown >= SPIN_FROM_FRAME !== spinning) {
+        spinning = shown >= SPIN_FROM_FRAME;
+        setPhoneSpinning(spinning);
+      }
     };
 
     const loop = () => {
@@ -261,7 +270,7 @@ export default function IceCaveScroll() {
             </div>
           </div>
 
-          <PhoneShowcase ref={phoneRef} active={introReady} />
+          <PhoneShowcase ref={phoneRef} spinning={introReady && phoneSpinning} />
 
           <div ref={cardsRef} className="ic-cards">
             <Card side="left" title="SEO" text="Websites built to rank from day one, with technical SEO baked into every page." />

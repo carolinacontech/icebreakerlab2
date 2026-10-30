@@ -209,6 +209,7 @@
   position: relative;
   pointer-events: auto;
   display: block;
+  perspective: 1400px;
   color: var(--snow);
   text-decoration: none;
   animation: ic-float 6s ease-in-out infinite;
@@ -219,7 +220,60 @@
   50% { transform: translateY(-12px) rotate(1.5deg); }
 }
 
+/* Frente y espalda comparten cuerpo 3D: al girar se ve la parte de atrás. */
+.ic-phone-body {
+  position: relative;
+  display: block;
+  transform-style: preserve-3d;
+}
+
+.ic-phone-body.is-spinning { animation: ic-spin 1.4s cubic-bezier(0.65, 0, 0.35, 1); }
+
+@keyframes ic-spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+.ic-phone-back {
+  position: absolute;
+  inset: 0;
+  border: 6px solid #1c1e30;
+  border-radius: 34px;
+  background:
+    radial-gradient(120% 70% at 30% 20%, rgba(133, 183, 235, 0.28), transparent 60%),
+    linear-gradient(160deg, #2a2d48, #12142a 55%, #0b0d1e);
+  box-shadow: 0 30px 70px rgba(0, 10, 30, 0.55), 0 0 0 1px rgba(165, 214, 246, 0.4);
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+.ic-phone-camera {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 26%;
+  background: rgba(8, 10, 22, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(165, 214, 246, 0.25);
+}
+
+.ic-phone-camera::before,
+.ic-phone-camera::after {
+  content: "";
+  position: absolute;
+  width: 38%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #3b4a72, #05060d 70%);
+  box-shadow: 0 0 0 2px #1c1e30;
+}
+
+.ic-phone-camera::before { top: 10%; left: 10%; }
+.ic-phone-camera::after { bottom: 10%; right: 10%; }
+
 .ic-phone-shell {
+  backface-visibility: hidden;
   position: relative;
   display: block;
   width: 100%;
@@ -407,6 +461,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ic-phone { animation: none; }
+  .ic-phone-body.is-spinning { animation: none; }
   .ic-phone-slide { transition: none; }
   .ic-word,
   .ic-copy {

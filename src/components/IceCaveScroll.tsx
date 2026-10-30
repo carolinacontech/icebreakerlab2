@@ -12,6 +12,7 @@ import {
   type Phase,
 } from "./ice-cave/engine";
 import { FRAME_COUNT } from "./ice-cave/frames";
+import PhoneShowcase from "./ice-cave/PhoneShowcase";
 import "./ice-cave/ice-cave.css";
 
 // Recorrido de una cueva de hielo controlado por scroll: secuencia de
@@ -21,9 +22,11 @@ const SCROLL_LENGTH_VH = 380;
 const SCROLL_SMOOTHING = 0.09;
 const LOADER_MIN_MS = 1500;
 
-const PHASES: Record<"hero" | "mid" | "cards" | "final", Phase> = {
+const PHASES: Record<"hero" | "mid" | "phone" | "cards" | "final", Phase> = {
   hero: { exit: [0.16, 0.28] },
   mid: { enter: [0.38, 0.46], exit: [0.58, 0.68] },
+  // El celular entra un poco antes que las tarjetas y tapa el fondo de la cueva.
+  phone: { enter: [0.7, 0.82] },
   cards: { enter: [0.76, 0.84] },
   final: { enter: [0.82, 0.9] },
 };
@@ -66,8 +69,10 @@ export default function IceCaveScroll() {
   const cardsRef = useRef<HTMLDivElement>(null);
   const cardBlursRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
   const [loader, setLoader] = useState<"loading" | "burning" | "done" | "error">("loading");
   const [introReady, setIntroReady] = useState(false);
+  const [phoneActive, setPhoneActive] = useState(false);
 
   useEffect(() => {
     const scene = sceneRef.current!;
@@ -88,6 +93,7 @@ export default function IceCaveScroll() {
     let cancelled = false;
     let target = 0;
     let progress = 0;
+    let phoneShown = false;
 
     // Se mide en cada frame en vez de escuchar `scroll`: Lenis mueve la página
     // sin que el evento llegue siempre a tiempo.
@@ -123,6 +129,18 @@ export default function IceCaveScroll() {
       applyPhase(cardBlursRef.current, PHASES.cards, false, false);
       applyPhase(cardsRef.current, PHASES.cards, false);
       applyPhase(finalRef.current, PHASES.final, true);
+      // El celular escala y se enfoca en vez de solo subir: lo maneja su CSS con --in.
+      const phone = phaseState(progress, PHASES.phone);
+      const phoneEl = phoneRef.current;
+      if (phoneEl) {
+        phoneEl.style.setProperty("--in", String(phone.opacity));
+        phoneEl.style.visibility = phone.visible ? "visible" : "hidden";
+      }
+      // Solo se avisa a React al cruzar el umbral, no en cada frame.
+      if (phone.visible !== phoneShown) {
+        phoneShown = phone.visible;
+        setPhoneActive(phoneShown);
+      }
       blur.render();
       raf = requestAnimationFrame(loop);
     };
@@ -227,6 +245,8 @@ export default function IceCaveScroll() {
               <p>From invisible to unmissable: design, speed and SEO working as one system.</p>
             </div>
           </div>
+
+          <PhoneShowcase ref={phoneRef} active={phoneActive} />
 
           <div ref={cardsRef} className="ic-cards">
             <Card side="left" title="SEO" text="Websites built to rank from day one, with technical SEO baked into every page." />

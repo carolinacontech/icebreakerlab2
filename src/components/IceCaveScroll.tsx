@@ -1,0 +1,266 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  BurnTransition,
+  DepthRenderer,
+  FrameSequence,
+  PixelBlur,
+  clamp,
+  lerp,
+  phaseState,
+  type Phase,
+} from "./ice-cave/engine";
+import { FRAME_COUNT } from "./ice-cave/frames";
+import "./ice-cave/ice-cave.css";
+
+// Recorrido de una cueva de hielo controlado por scroll: secuencia de
+// fotogramas con paralaje por profundidad y bloques de texto que entran y
+// salen en tramos fijos del progreso (0 → 1).
+const SCROLL_LENGTH_VH = 380;
+const SCROLL_SMOOTHING = 0.09;
+const LOADER_MIN_MS = 1500;
+
+const PHASES: Record<"hero" | "mid" | "cards" | "final", Phase> = {
+  hero: { exit: [0.16, 0.28] },
+  mid: { enter: [0.38, 0.46], exit: [0.58, 0.68] },
+  cards: { enter: [0.76, 0.84] },
+  final: { enter: [0.82, 0.9] },
+};
+
+function Title({ line, italicLine }: { line: string; italicLine: string }) {
+  const first = line.split(" ");
+  const second = italicLine.split(" ");
+  const words = (list: string[], offset: number) =>
+    list.map((w, i) => (
+      <span key={i} className="ic-word" style={{ "--word-index": i + offset } as React.CSSProperties}>
+        {w}
+        {i < list.length - 1 ? " " : ""}
+      </span>
+    ));
+  return (
+    <h2 className="ic-title">
+      <span className="ic-title-line">{words(first, 0)}</span>
+      <span className="ic-title-line ic-italic">{words(second, first.length)}</span>
+    </h2>
+  );
+}
+
+function Card({ side, title, text }: { side: "left" | "right"; title: string; text: string }) {
+  return (
+    <article className={`ic-card ${side}`}>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </article>
+  );
+}
+
+export default function IceCaveScroll() {
+  const sceneRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const burnRef = useRef<HTMLCanvasElement>(null);
+  const counterRef = useRef<HTMLSpanElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const midRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const cardBlursRef = useRef<HTMLDivElement>(null);
+  const finalRef = useRef<HTMLDivElement>(null);
+  const [loader, setLoader] = useState<"loading" | "burning" | "done" | "error">("loading");
+  const [introReady, setIntroReady] = useState(false);
+
+  useEffect(() => {
+    const scene = sceneRef.current!;
+    const canvas = canvasRef.current!;
+    const sequence = new FrameSequence();
+    let renderer: DepthRenderer;
+    try {
+      renderer = new DepthRenderer(canvas, sequence);
+    } catch {
+      // Sin WebGL no hay escena; el aviso se agenda fuera del cuerpo del efecto.
+      const id = requestAnimationFrame(() => setLoader("error"));
+      return () => cancelAnimationFrame(id);
+    }
+    const blur = new PixelBlur(canvas, scene);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let raf = 0;
+    let cancelled = false;
+    let target = 0;
+    let progress = 0;
+
+    // Se mide en cada frame en vez de escuchar `scroll`: Lenis mueve la página
+    // sin que el evento llegue siempre a tiempo.
+    const measure = () => {
+      const travel = scene.offsetHeight - window.innerHeight;
+      target = clamp(-scene.getBoundingClientRect().top / Math.max(1, travel));
+    };
+
+    const applyPhase = (el: HTMLElement | null, phase: Phase, reveal: boolean, translate = true) => {
+      if (!el) return;
+      const s = phaseState(progress, phase);
+      el.style.opacity = String(s.opacity);
+      if (translate) el.style.transform = `translate3d(0,${s.y}px,0)`;
+      el.style.visibility = s.visible ? "visible" : "hidden";
+      if (!reveal || !phase.enter) return;
+      const t = clamp((progress - phase.enter[0]) / (phase.enter[1] - phase.enter[0]));
+      const words = el.querySelectorAll<HTMLElement>(".ic-word");
+      words.forEach((w, i) => {
+        const delay = (i / Math.max(words.length, 1)) * 0.58;
+        w.style.setProperty("--reveal", String(clamp((t - delay) / 0.34)));
+      });
+      el.querySelector<HTMLElement>(".ic-copy")?.style.setProperty("--detail-reveal", String(clamp((t - 0.62) / 0.38)));
+    };
+
+    const loop = () => {
+      measure();
+      progress = lerp(progress, target, reducedMotion ? 1 : SCROLL_SMOOTHING);
+      const frame = Math.round(progress * (FRAME_COUNT - 1));
+      sequence.load(frame).catch(() => {});
+      renderer.render(frame);
+      applyPhase(heroRef.current, PHASES.hero, false);
+      applyPhase(midRef.current, PHASES.mid, true);
+      applyPhase(cardBlursRef.current, PHASES.cards, false, false);
+      applyPhase(cardsRef.current, PHASES.cards, false);
+      applyPhase(finalRef.current, PHASES.final, true);
+      blur.render();
+      raf = requestAnimationFrame(loop);
+    };
+
+    const onResize = () => renderer.resize();
+    const onPointerMove = (e: PointerEvent) =>
+      renderer.setPointer((e.clientX / window.innerWidth - 0.5) * 2, (0.5 - e.clientY / window.innerHeight) * 2);
+    const onPointerLeave = () => renderer.setPointer(0, 0);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onPointerLeave);
+
+    const intro = async () => {
+      const start = performance.now();
+      let ready = false;
+      const firstFrame = sequence.start().then(() => {
+        ready = true;
+        renderer.resize();
+        renderer.render(0);
+      });
+
+      // El contador no pasa de 99 hasta que el primer fotograma está listo.
+      await new Promise<void>((resolve) => {
+        const tick = (now: number) => {
+          if (cancelled) return resolve();
+          const elapsed = now - start;
+          const pct = Math.floor(Math.min(elapsed / LOADER_MIN_MS, ready ? 1 : 0.99) * 100);
+          if (counterRef.current) counterRef.current.textContent = String(pct);
+          if (barRef.current) barRef.current.style.transform = `scaleX(${pct / 100})`;
+          if (elapsed >= LOADER_MIN_MS && ready) return resolve();
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      await firstFrame;
+      if (cancelled) return;
+
+      setLoader("burning");
+      let burn: Promise<void> = Promise.resolve();
+      try {
+        if (!reducedMotion && burnRef.current) burn = new BurnTransition(burnRef.current).play(1150);
+      } catch {
+        // Sin WebGL para la transición: el loader simplemente desaparece.
+      }
+      await new Promise((r) => setTimeout(r, reducedMotion ? 0 : 760));
+      if (cancelled) return;
+      setIntroReady(true);
+      await burn;
+      if (cancelled) return;
+      setLoader("done");
+      measure();
+      progress = target;
+      loop();
+    };
+
+    intro().catch(() => !cancelled && setLoader("error"));
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      sequence.stop();
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("pointermove", onPointerMove);
+      document.documentElement.removeEventListener("pointerleave", onPointerLeave);
+    };
+  }, []);
+
+  return (
+    <section
+      ref={sceneRef}
+      className={`ic-scene${introReady ? " ic-intro-ready" : ""}`}
+      style={{ height: `${SCROLL_LENGTH_VH}vh` }}
+      aria-label="Breaking through the ice"
+    >
+      <div className="ic-stage">
+        <canvas ref={canvasRef} className="ic-sequence" aria-hidden="true" />
+        <div className="ic-shade" />
+
+        <div ref={cardBlursRef} className="ic-card-blurs" aria-hidden="true">
+          <div className="ic-card-blur left">
+            <canvas className="ic-pixel-blur" data-blur="24" />
+          </div>
+          <div className="ic-card-blur right">
+            <canvas className="ic-pixel-blur" data-blur="24" />
+          </div>
+        </div>
+
+        <div className="ic-content">
+          <div ref={heroRef} className="ic-state ic-hero">
+            <Title line="Break the ice." italicLine="Get found on Google." />
+            <div className="ic-copy">
+              <p>We build websites that rank on Google and turn cold visitors into warm clients.</p>
+              <Link className="ic-cta" href="/frost">
+                Start your project
+              </Link>
+            </div>
+          </div>
+
+          <div ref={midRef} className="ic-state ic-mid">
+            <Title line="Cold traffic." italicLine="Warm leads." />
+            <div className="ic-copy">
+              <p>From invisible to unmissable: design, speed and SEO working as one system.</p>
+            </div>
+          </div>
+
+          <div ref={cardsRef} className="ic-cards">
+            <Card side="left" title="SEO" text="Websites built to rank from day one, with technical SEO baked into every page." />
+            <Card side="right" title="Conversion" text="Landing pages designed around one goal: turning visitors into clients." />
+          </div>
+
+          <div ref={finalRef} className="ic-state ic-final">
+            <Title line="Built to" italicLine="break the ice." />
+            <div className="ic-copy">
+              <p>One website, designed from the core outward to rank and convert.</p>
+            </div>
+          </div>
+        </div>
+
+        {loader !== "done" && (
+          <div className={`ic-loader ic-loader--${loader}`} role="status" aria-live="polite">
+            <canvas ref={burnRef} className="ic-burn" />
+            <div className="ic-loader-ui">
+              {loader === "error" ? (
+                <p className="ic-loader-error">Unable to load the scene.</p>
+              ) : (
+                <>
+                  <div className="ic-counter">
+                    <span ref={counterRef}>0</span>%
+                  </div>
+                  <div className="ic-track">
+                    <div ref={barRef} className="ic-bar" />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

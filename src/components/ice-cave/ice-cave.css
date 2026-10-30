@@ -1,0 +1,298 @@
+/* Escena "cueva de hielo" (IceCaveScroll). Todo va con prefijo ic- para no
+   chocar con el resto del sitio. */
+
+.ic-scene {
+  position: relative;
+  background: var(--night);
+}
+
+.ic-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--midnight);
+}
+
+.ic-sequence,
+.ic-shade,
+.ic-content {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ic-sequence { display: block; }
+
+.ic-shade {
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.16), transparent 25%, transparent 62%, rgba(0, 0, 0, 0.54));
+}
+
+.ic-content {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Bloques de texto ------------------------------------------------------ */
+
+.ic-state {
+  position: absolute;
+  left: 28px;
+  /* Deja libre la esquina del botón del ChatBot. */
+  right: 104px;
+  bottom: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 803px) 330px;
+  justify-content: space-between;
+  align-items: end;
+  will-change: opacity, transform;
+}
+
+.ic-mid,
+.ic-cards,
+.ic-final {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.ic-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 80px;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  font-weight: 400;
+  color: var(--snow);
+}
+
+.ic-title-line { display: block; white-space: nowrap; }
+
+.ic-italic {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-style: italic;
+  letter-spacing: -0.02em;
+}
+
+.ic-word {
+  display: inline-block;
+  white-space: pre;
+  opacity: var(--reveal, 0);
+  transform: translate3d(0, calc((1 - var(--reveal, 0)) * 28px), 0);
+  filter: blur(calc((1 - var(--reveal, 0)) * 7px));
+  transition: opacity 0.58s linear, transform 0.58s linear, filter 0.58s linear;
+}
+
+.ic-copy {
+  font-size: 18px;
+  line-height: 1.22;
+  color: var(--snow);
+  opacity: var(--detail-reveal, 0);
+  transform: translate3d(0, calc((1 - var(--detail-reveal, 0)) * 18px), 0);
+  filter: blur(calc((1 - var(--detail-reveal, 0)) * 5px));
+}
+
+.ic-copy p { margin: 0; }
+
+.ic-cta {
+  pointer-events: auto;
+  display: inline-flex;
+  margin-top: 28px;
+  padding: 16px 28px;
+  border-radius: 99px;
+  background: var(--glacier);
+  color: var(--snow);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.25s ease;
+}
+
+.ic-cta:hover { background: var(--aurora); }
+
+/* La entrada del hero no depende del scroll: arranca al terminar el loader. */
+.ic-intro-ready .ic-hero .ic-word {
+  animation: ic-reveal 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(0.8s + var(--word-index) * 0.11s);
+}
+
+.ic-intro-ready .ic-hero .ic-copy {
+  animation: ic-reveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.65s forwards;
+}
+
+@keyframes ic-reveal {
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* Tarjetas de cristal -------------------------------------------------- */
+
+.ic-cards {
+  position: absolute;
+  inset: 0;
+  will-change: opacity, transform;
+}
+
+.ic-card {
+  position: absolute;
+  width: 330px;
+  /* Misma altura que su panel desenfocado (.ic-card-blur). */
+  height: 174px;
+  padding: 24px 24px 40px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 50px rgba(0, 20, 45, 0.12);
+  color: var(--snow);
+}
+
+.ic-card h3 { margin: 0 0 10px; font-size: 28px; font-weight: 400; }
+.ic-card p { margin: 0; font-size: 18px; line-height: 1.2; }
+
+.ic-card-blurs {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ic-card-blur {
+  position: absolute;
+  width: 330px;
+  height: 174px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ic-card.left,
+.ic-card-blur.left { left: 28px; top: 22%; }
+.ic-card.right,
+.ic-card-blur.right { right: 29px; top: 49%; }
+
+.ic-pixel-blur {
+  position: absolute;
+  display: block;
+  max-width: none;
+  pointer-events: none;
+}
+
+/* Loader --------------------------------------------------------------- */
+
+/* El Navbar fijo queda por encima del loader a propósito. */
+.ic-loader {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  overflow: hidden;
+  color: var(--snow);
+}
+
+.ic-loader--loading,
+.ic-loader--error { background: #609aca; }
+
+.ic-burn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ic-loader-ui {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+}
+
+.ic-loader--burning .ic-loader-ui { animation: ic-loader-out 0.35s ease forwards; }
+
+@keyframes ic-loader-out {
+  to { opacity: 0; transform: translateY(10px); }
+}
+
+.ic-counter {
+  position: absolute;
+  left: 28px;
+  bottom: 28px;
+  font: italic 80px/0.8 var(--font-instrument-serif), Georgia, serif;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 24px rgba(20, 59, 78, 0.45);
+}
+
+.ic-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(31, 72, 91, 0.22);
+}
+
+.ic-bar {
+  width: 100%;
+  height: 100%;
+  background: var(--snow);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.ic-loader-error {
+  position: absolute;
+  left: 28px;
+  bottom: 28px;
+  margin: 0;
+  font-size: 18px;
+}
+
+/* Responsive ----------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .ic-state {
+    left: 18px;
+    right: 18px;
+    bottom: 96px;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .ic-title { font-size: clamp(48px, 11vw, 70px); }
+  .ic-title-line { white-space: normal; }
+  .ic-copy { max-width: 440px; }
+  .ic-card,
+  .ic-card-blur { width: min(330px, calc(100vw - 36px)); }
+  .ic-card { height: 157px; padding: 20px 20px 28px; }
+  .ic-card-blur { height: 157px; }
+  .ic-card.left,
+  .ic-card-blur.left { left: 18px; top: 18%; }
+  .ic-card.right,
+  .ic-card-blur.right { right: 18px; top: 43%; }
+}
+
+@media (max-width: 560px) {
+  .ic-state { gap: 18px; }
+  .ic-title { font-size: clamp(42px, 12vw, 58px); }
+  .ic-copy,
+  .ic-card p { font-size: 16px; }
+  .ic-card h3 { font-size: 24px; }
+  .ic-card.left,
+  .ic-card-blur.left { top: 16%; }
+  .ic-card.right,
+  .ic-card-blur.right { top: 39%; }
+  .ic-counter { left: 18px; bottom: 22px; font-size: 58px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ic-word,
+  .ic-copy {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    transition: none !important;
+  }
+}

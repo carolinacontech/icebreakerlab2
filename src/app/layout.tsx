@@ -76,9 +76,6 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${outfit.variable} h-full antialiased`}>
-      <head>
-        <link rel="preload" href="/models/iceberg-web.glb" as="fetch" crossOrigin="anonymous" />
-      </head>
       <body className="min-h-full flex flex-col">
         <SmoothScroll>
           <IceCrackProvider>{children}</IceCrackProvider>

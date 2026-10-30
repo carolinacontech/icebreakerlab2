@@ -33,10 +33,14 @@ const ANCHOR_MAX = Math.max(...ANCHOR_HEIGHTS);
 const PHONE_MAX_VH = { wide: 0.56, narrow: 0.44 };
 // Desde aquí giraba el logo en el video original: ahí empieza a girar el celular.
 const SPIN_FROM_FRAME = 100;
+// Separación entre el titular del hero y el borde superior del celular.
+const TITLE_GAP_PX = 28;
 // Alto de la carcasa en CSS a escala 1 (ver .ic-phone-shell).
 const PHONE_BASE_HEIGHT = 530;
 
-const PHASES: Record<"hero" | "mid" | "cards" | "final", Phase> = {
+const PHASES: Record<"heroTitle" | "hero" | "mid" | "cards" | "final", Phase> = {
+  // El titular se va desvaneciendo desde el primer movimiento de scroll.
+  heroTitle: { exit: [0, 0.14] },
   hero: { exit: [0.16, 0.28] },
   mid: { enter: [0.38, 0.46], exit: [0.58, 0.68] },
   cards: { enter: [0.76, 0.84] },
@@ -77,6 +81,7 @@ export default function IceCaveScroll() {
   const counterRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const heroTitleRef = useRef<HTMLDivElement>(null);
   const midRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
   const cardBlursRef = useRef<HTMLDivElement>(null);
@@ -132,6 +137,16 @@ export default function IceCaveScroll() {
 
     // El celular sigue la cámara: se ancla donde estaba el logo en el fotograma
     // que está en pantalla, con el mismo paralaje que la pared del fondo.
+    // Titular del hero: centrado justo encima del celular y se apaga al scrollear.
+    const placeHeroTitle = (x: number, phoneTop: number) => {
+      const el = heroTitleRef.current;
+      if (!el) return;
+      const s = phaseState(progress, PHASES.heroTitle);
+      el.style.opacity = String(s.opacity);
+      el.style.visibility = s.visible ? "visible" : "hidden";
+      el.style.transform = `translate3d(${x}px,${phoneTop - TITLE_GAP_PX + s.y}px,0) translate(-50%,-100%)`;
+    };
+
     const placePhone = () => {
       const el = phoneRef.current;
       const shown = renderer.frame;
@@ -144,6 +159,7 @@ export default function IceCaveScroll() {
       const height = Math.min(ah * p.scale * factor, window.innerHeight * maxVh);
       const scale = height / PHONE_BASE_HEIGHT;
       el.style.transform = `translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%) scale(${scale})`;
+      placeHeroTitle(p.x, p.y - height / 2);
       // De lejos es solo un brillo: el pie de foto y el clic llegan al acercarse.
       el.style.setProperty("--near", String(clamp((scale - 0.45) / 0.25)));
       // Solo se avisa a React al cruzar el umbral, no en cada frame.
@@ -253,8 +269,11 @@ export default function IceCaveScroll() {
         </div>
 
         <div className="ic-content">
-          <div ref={heroRef} className="ic-state ic-hero">
+          <div ref={heroTitleRef} className="ic-hero-title">
             <Title as="h1" line="Break the ice." italicLine="Get found on Google." />
+          </div>
+
+          <div ref={heroRef} className="ic-state ic-hero">
             <div className="ic-copy">
               <p>We build websites that rank on Google and turn cold visitors into warm clients.</p>
               <Link className="ic-cta" href="/frost">

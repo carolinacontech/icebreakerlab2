@@ -65,18 +65,27 @@
   flex-direction: column;
   gap: 6px;
   font-size: 80px;
-  line-height: 0.9;
+  line-height: 0.98;
   letter-spacing: -0.035em;
-  font-weight: 400;
+  /* Outfit trae un espacio estrecho; con el tracking negativo se pegaban. */
+  word-spacing: 0.1em;
+  font-weight: 700;
   color: var(--snow);
+  /* Sombra suave: el degradado se lee también sobre el hielo claro. */
+  filter: drop-shadow(0 2px 18px rgba(4, 16, 30, 0.55));
 }
 
 .ic-title-line { display: block; white-space: nowrap; }
 
-.ic-italic {
-  font-family: var(--font-instrument-serif), Georgia, serif;
-  font-style: italic;
-  letter-spacing: -0.02em;
+/* Segunda línea con el mismo degradado de marca que usaba el hero anterior.
+   Va en cada palabra: el clip de texto no atraviesa hijos con transform. */
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .ic-accent .ic-word {
+    background: linear-gradient(120deg, #f5f8ff, #babffa 42%, #74dbd5);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 .ic-word {
@@ -128,8 +137,16 @@
 
 .ic-hero-title .ic-title { align-items: center; }
 
-/* Sin el titular, el texto y el botón siguen en la columna derecha. */
-.ic-hero .ic-copy { grid-column: 2; }
+/* Hero centrado: titular encima del celular; texto y botón centrados abajo. */
+.ic-hero {
+  /* Márgenes simétricos (los demás bloques dejan sitio al ChatBot a la derecha). */
+  left: 104px;
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+  text-align: center;
+}
+
+.ic-hero .ic-copy { margin-inline: auto; }
 
 .ic-intro-ready .ic-hero-title .ic-word {
   animation: ic-reveal 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -166,7 +183,7 @@
   color: var(--snow);
 }
 
-.ic-card h3 { margin: 0 0 10px; font-size: 28px; font-weight: 400; }
+.ic-card h3 { margin: 0 0 10px; font-size: 28px; font-weight: 600; letter-spacing: -0.03em; }
 .ic-card p { margin: 0; font-size: 18px; line-height: 1.2; }
 
 .ic-card-blurs {
@@ -436,8 +453,10 @@
   position: absolute;
   left: 28px;
   bottom: 28px;
-  font: italic 80px/0.8 var(--font-instrument-serif), Georgia, serif;
-  letter-spacing: -0.03em;
+  font-size: 80px;
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
   text-shadow: 0 2px 24px rgba(20, 59, 78, 0.45);
 }
 
@@ -480,7 +499,6 @@
   .ic-title { font-size: clamp(48px, 11vw, 70px); }
   .ic-title-line { white-space: normal; }
   .ic-copy { max-width: 440px; }
-  .ic-hero .ic-copy { grid-column: 1; }
   .ic-card,
   .ic-card-blur { width: min(330px, calc(100vw - 36px)); }
   .ic-card { height: 157px; padding: 20px 20px 28px; }
@@ -506,6 +524,8 @@
   .ic-card.right,
   .ic-card-blur.right { top: 39%; }
   .ic-counter { left: 18px; bottom: 22px; font-size: 58px; }
+  /* El titular del hero va encima del celular: dos líneas, sin taparlo. */
+  .ic-hero-title .ic-title { font-size: clamp(30px, 9vw, 42px); }
   /* El pie de foto chocaría con el titular final. */
   .ic-phone-caption { display: none; }
 }

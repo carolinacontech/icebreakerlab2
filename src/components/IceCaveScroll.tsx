@@ -60,7 +60,7 @@ function Title({ line, italicLine, as: Tag = "h2" }: { line: string; italicLine:
   return (
     <Tag className="ic-title">
       <span className="ic-title-line">{words(first, 0)}</span>
-      <span className="ic-title-line ic-italic">{words(second, first.length)}</span>
+      <span className="ic-title-line ic-accent">{words(second, first.length)}</span>
     </Tag>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Outfit } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { IceCrackProvider } from "@/components/IceCrack";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -8,14 +8,6 @@ const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
-});
-
-// Serif itálica de los titulares del hero (IceCaveScroll).
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: "400",
-  style: "italic",
 });
 
 import ChatBot from "@/components/ChatBot";
@@ -83,7 +75,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${instrumentSerif.variable} h-full antialiased`}>
+    <html lang="en" className={`${outfit.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <SmoothScroll>
           <IceCrackProvider>{children}</IceCrackProvider>

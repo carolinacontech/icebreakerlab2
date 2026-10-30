@@ -3,8 +3,9 @@ import { forwardRef, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-// Celular flotante del final de la cueva: tapa el fondo del recorrido y va
-// rotando capturas móviles reales de proyectos del portafolio.
+// Celular flotante al fondo de la cueva: ocupa el lugar del logo de la
+// plantilla, crece a medida que la cámara se acerca y va rotando capturas
+// móviles reales de proyectos del portafolio.
 const SCREENS = [
   { name: "NODO Jiu Jitsu Academy", detail: "Website + Local SEO", src: "/images/portfolio/mockups/nodo-academy-mobile.png" },
   { name: "Market Open Media", detail: "Corporate Website + SEO", src: "/images/portfolio/mockups/market-openmedia-mobile.png" },

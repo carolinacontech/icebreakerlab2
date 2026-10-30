@@ -216,6 +216,30 @@ export class DepthRenderer {
     this.gl.uniform2f(this.uniforms.cover, view > image ? 1 : view / image, view > image ? image / view : 1);
   }
 
+  // Fotograma que está en pantalla (-1 mientras no hay ninguno cargado).
+  get frame() {
+    return this.currentFrame;
+  }
+
+  // Lleva un punto de la imagen original (px) a px CSS del canvas con el mismo
+  // recorte "cover" y el mismo paralaje que el shader para esa profundidad
+  // (0 = fondo, 1 = cerca). `scale` = px CSS por px de imagen.
+  project(ix: number, iy: number, depth: number) {
+    const w = this.canvas.clientWidth;
+    const h = this.canvas.clientHeight;
+    const [iw, ih] = this.imageSize;
+    const view = w / h;
+    const image = iw / ih;
+    const sx = view > image ? 1 : view / image;
+    const sy = view > image ? image / view : 1;
+    const c = (depth - 0.5) * 2;
+    // El shader muestra en p el texel p + d, así que el contenido se corre -d
+    // (con la textura volteada en vertical).
+    const u = ix / iw - this.pointer.x * DEPTH_STRENGTH[0] * c;
+    const v = iy / ih + this.pointer.y * DEPTH_STRENGTH[1] * c;
+    return { x: ((u - 0.5) / sx + 0.5) * w, y: ((v - 0.5) / sy + 0.5) * h, scale: w / (iw * sx) };
+  }
+
   render(frame: number) {
     const index = this.sequence.nearest(frame);
     if (index < 0) return;

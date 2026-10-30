@@ -11,6 +11,7 @@ import {
   phaseState,
   type Phase,
 } from "./ice-cave/engine";
+import { ANCHORS } from "./ice-cave/anchors";
 import { FRAME_COUNT } from "./ice-cave/frames";
 import PhoneShowcase from "./ice-cave/PhoneShowcase";
 import "./ice-cave/ice-cave.css";
@@ -21,12 +22,16 @@ import "./ice-cave/ice-cave.css";
 const SCROLL_LENGTH_VH = 380;
 const SCROLL_SMOOTHING = 0.09;
 const LOADER_MIN_MS = 1500;
+// El celular reemplaza al logo de la plantilla: mide PHONE_TO_ANCHOR veces el
+// alto que tenía el logo, sin pasar de una fracción del alto de la pantalla.
+const PHONE_TO_ANCHOR = 1.35;
+const PHONE_MAX_VH = { wide: 0.56, narrow: 0.44 };
+// Alto de la carcasa en CSS a escala 1 (ver .ic-phone-shell).
+const PHONE_BASE_HEIGHT = 530;
 
-const PHASES: Record<"hero" | "mid" | "phone" | "cards" | "final", Phase> = {
+const PHASES: Record<"hero" | "mid" | "cards" | "final", Phase> = {
   hero: { exit: [0.16, 0.28] },
   mid: { enter: [0.38, 0.46], exit: [0.58, 0.68] },
-  // El celular entra un poco antes que las tarjetas y tapa el fondo de la cueva.
-  phone: { enter: [0.7, 0.82] },
   cards: { enter: [0.76, 0.84] },
   final: { enter: [0.82, 0.9] },
 };
@@ -72,7 +77,6 @@ export default function IceCaveScroll() {
   const phoneRef = useRef<HTMLDivElement>(null);
   const [loader, setLoader] = useState<"loading" | "burning" | "done" | "error">("loading");
   const [introReady, setIntroReady] = useState(false);
-  const [phoneActive, setPhoneActive] = useState(false);
 
   useEffect(() => {
     const scene = sceneRef.current!;
@@ -93,7 +97,6 @@ export default function IceCaveScroll() {
     let cancelled = false;
     let target = 0;
     let progress = 0;
-    let phoneShown = false;
 
     // Se mide en cada frame en vez de escuchar `scroll`: Lenis mueve la página
     // sin que el evento llegue siempre a tiempo.
@@ -118,6 +121,22 @@ export default function IceCaveScroll() {
       el.querySelector<HTMLElement>(".ic-copy")?.style.setProperty("--detail-reveal", String(clamp((t - 0.62) / 0.38)));
     };
 
+    // El celular sigue la cámara: se ancla donde estaba el logo en el fotograma
+    // que está en pantalla, con el mismo paralaje que la pared del fondo.
+    const placePhone = () => {
+      const el = phoneRef.current;
+      const shown = renderer.frame;
+      if (!el || shown < 0) return;
+      const [ax, ay, ah] = ANCHORS[shown];
+      const p = renderer.project(ax, ay, 0);
+      const maxVh = window.innerWidth <= 900 ? PHONE_MAX_VH.narrow : PHONE_MAX_VH.wide;
+      const height = Math.min(ah * p.scale * PHONE_TO_ANCHOR, window.innerHeight * maxVh);
+      const scale = height / PHONE_BASE_HEIGHT;
+      el.style.transform = `translate3d(${p.x}px,${p.y}px,0) translate(-50%,-50%) scale(${scale})`;
+      // De lejos es solo un brillo: el pie de foto y el clic llegan al acercarse.
+      el.style.setProperty("--near", String(clamp((scale - 0.45) / 0.25)));
+    };
+
     const loop = () => {
       measure();
       progress = lerp(progress, target, reducedMotion ? 1 : SCROLL_SMOOTHING);
@@ -129,18 +148,7 @@ export default function IceCaveScroll() {
       applyPhase(cardBlursRef.current, PHASES.cards, false, false);
       applyPhase(cardsRef.current, PHASES.cards, false);
       applyPhase(finalRef.current, PHASES.final, true);
-      // El celular escala y se enfoca en vez de solo subir: lo maneja su CSS con --in.
-      const phone = phaseState(progress, PHASES.phone);
-      const phoneEl = phoneRef.current;
-      if (phoneEl) {
-        phoneEl.style.setProperty("--in", String(phone.opacity));
-        phoneEl.style.visibility = phone.visible ? "visible" : "hidden";
-      }
-      // Solo se avisa a React al cruzar el umbral, no en cada frame.
-      if (phone.visible !== phoneShown) {
-        phoneShown = phone.visible;
-        setPhoneActive(phoneShown);
-      }
+      placePhone();
       blur.render();
       raf = requestAnimationFrame(loop);
     };
@@ -246,7 +254,7 @@ export default function IceCaveScroll() {
             </div>
           </div>
 
-          <PhoneShowcase ref={phoneRef} active={phoneActive} />
+          <PhoneShowcase ref={phoneRef} active={introReady} />
 
           <div ref={cardsRef} className="ic-cards">
             <Card side="left" title="SEO" text="Websites built to rank from day one, with technical SEO baked into every page." />

@@ -28,7 +28,7 @@ const PHASES: Record<"hero" | "mid" | "cards" | "final", Phase> = {
   final: { enter: [0.82, 0.9] },
 };
 
-function Title({ line, italicLine }: { line: string; italicLine: string }) {
+function Title({ line, italicLine, as: Tag = "h2" }: { line: string; italicLine: string; as?: "h1" | "h2" }) {
   const first = line.split(" ");
   const second = italicLine.split(" ");
   const words = (list: string[], offset: number) =>
@@ -39,10 +39,10 @@ function Title({ line, italicLine }: { line: string; italicLine: string }) {
       </span>
     ));
   return (
-    <h2 className="ic-title">
+    <Tag className="ic-title">
       <span className="ic-title-line">{words(first, 0)}</span>
       <span className="ic-title-line ic-italic">{words(second, first.length)}</span>
-    </h2>
+    </Tag>
   );
 }
 
@@ -212,7 +212,7 @@ export default function IceCaveScroll() {
 
         <div className="ic-content">
           <div ref={heroRef} className="ic-state ic-hero">
-            <Title line="Break the ice." italicLine="Get found on Google." />
+            <Title as="h1" line="Break the ice." italicLine="Get found on Google." />
             <div className="ic-copy">
               <p>We build websites that rank on Google and turn cold visitors into warm clients.</p>
               <Link className="ic-cta" href="/frost">

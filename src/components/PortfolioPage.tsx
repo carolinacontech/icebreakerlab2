@@ -204,7 +204,7 @@ const projects = [
   },
   {
     id: 10,
-    name: "Studio Calm",
+    name: "Health Club",
     category: "Wellness & Spa",
     headline: "Begin Your Calm Retreat",
     tags: ["Website", "Booking", "SEO"],

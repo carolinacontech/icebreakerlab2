@@ -11,7 +11,6 @@ const SCREENS = [
   { name: "NODO Jiu Jitsu Academy", detail: "Website + Local SEO", src: "/images/portfolio/mockups/nodo-academy-mobile.png" },
   { name: "Market Open Media", detail: "Corporate Website + SEO", src: "/images/portfolio/mockups/market-openmedia-mobile.png" },
   { name: "Kings Tree Services", detail: "Website + Local SEO", src: "/images/portfolio/mockups/king-tree-services-mobile.png" },
-  { name: "Eva Shoes", detail: "E-commerce / Footwear", src: "/images/portfolio/mockups/eva-shoes-2026.webp" },
 ];
 // Debe coincidir con la duración de @keyframes ic-spin.
 const SPIN_MS = 1400;

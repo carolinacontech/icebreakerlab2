@@ -115,8 +115,10 @@ export default function IceCaveScroll() {
     // Se mide en cada frame en vez de escuchar `scroll`: Lenis mueve la página
     // sin que el evento llegue siempre a tiempo.
     const measure = () => {
+      const rect = scene.getBoundingClientRect();
       const travel = scene.offsetHeight - window.innerHeight;
-      target = clamp(-scene.getBoundingClientRect().top / Math.max(1, travel));
+      target = clamp(-rect.top / Math.max(1, travel));
+      return rect.bottom > 0 && rect.top < window.innerHeight;
     };
 
     const applyPhase = (el: HTMLElement | null, phase: Phase, reveal: boolean, translate = true) => {
@@ -170,7 +172,12 @@ export default function IceCaveScroll() {
     };
 
     const loop = () => {
-      measure();
+      // Fuera de pantalla (leyendo el resto del home) no se dibuja nada:
+      // así la cueva no gasta GPU ni batería mientras no se ve.
+      if (!measure() && Math.abs(target - progress) < 0.001) {
+        raf = requestAnimationFrame(loop);
+        return;
+      }
       progress = lerp(progress, target, reducedMotion ? 1 : SCROLL_SMOOTHING);
       const frame = Math.round(progress * (FRAME_COUNT - 1));
       sequence.load(frame).catch(() => {});

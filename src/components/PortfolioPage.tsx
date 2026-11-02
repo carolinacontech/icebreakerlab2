@@ -208,10 +208,9 @@ const projects = [
     category: "Wellness & Spa",
     headline: "Begin Your Calm Retreat",
     tags: ["Website", "Booking", "SEO"],
-    img: "/images/portfolio/mockups/wellness.png",
-    w: 1024,
-    h: 5874,
-    note: "Screenshot taken directly from the live site, so its resolution is limited.",
+    img: "/images/portfolio/mockups/wellness-spa.webp",
+    w: 667,
+    h: 2000,
     color: "#5DCAA5",
   },
 ];

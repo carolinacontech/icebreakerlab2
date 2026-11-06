@@ -1,6 +1,6 @@
 // Motor de la escena "cueva de hielo": carga de fotogramas, render con
-// paralaje por mapa de profundidad (WebGL), blur de cristal por píxeles y la
-// transición de "quemado" del loader. Todo es imperativo a propósito: corre
+// paralaje por mapa de profundidad (WebGL) y blur de cristal por píxeles.
+// Todo es imperativo a propósito: corre
 // dentro de un único requestAnimationFrame, fuera del ciclo de React.
 import { COLOR_FRAMES, DEPTH_FRAMES, FRAME_COUNT } from "./frames";
 
@@ -305,67 +305,5 @@ export class PixelBlur {
       ctx.drawImage(this.source, -(box.left - src.left - pad) * sx, -(box.top - src.top - pad) * sy);
       ctx.restore();
     }
-  }
-}
-
-const BURN_FRAGMENT = `precision highp float;varying vec2 vUv;uniform vec3 uBase;uniform vec2 uResolution;uniform float uProgress;uniform float uTime;
-float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
-float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.)),f.x),f.y);}
-float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+vec2(13.7,8.4);a*=.5;}return v;}
-void main(){vec2 uv=vUv;vec2 p=uv-.5;p.x*=uResolution.x/uResolution.y;
-float n=fbm(uv*3.1+vec2(uTime*.035,-uTime*.025));float detail=fbm(uv*8.4-vec2(uTime*.02));
-float field=length(p)+(n-.5)*.24+(detail-.5)*.065;float threshold=mix(-.22,1.02,uProgress);
-float alpha=smoothstep(threshold-.045,threshold+.045,field);float rim=1.-smoothstep(.006,.052,abs(field-threshold));
-float coverage=max(alpha,rim*.18);vec3 color=mix(uBase,vec3(1.),rim*.68);gl_FragColor=vec4(color*coverage,coverage);}`;
-
-export class BurnTransition {
-  private gl: WebGLRenderingContext;
-  private progress: WebGLUniformLocation | null;
-  private time: WebGLUniformLocation | null;
-  private resolution: WebGLUniformLocation | null;
-
-  constructor(private canvas: HTMLCanvasElement) {
-    const gl = canvas.getContext("webgl", { alpha: true, antialias: false, premultipliedAlpha: true });
-    if (!gl) throw new Error("WebGL unavailable for loader transition");
-    this.gl = gl;
-    const program = createProgram(gl, QUAD_VERTEX, BURN_FRAGMENT);
-    this.progress = gl.getUniformLocation(program, "uProgress");
-    this.time = gl.getUniformLocation(program, "uTime");
-    this.resolution = gl.getUniformLocation(program, "uResolution");
-    // Azul hielo de la capa que se "derrite" sobre la escena.
-    gl.uniform3f(gl.getUniformLocation(program, "uBase"), 96 / 255, 154 / 255, 202 / 255);
-    this.render(0);
-  }
-
-  private resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.round(this.canvas.clientWidth * dpr);
-    const h = Math.round(this.canvas.clientHeight * dpr);
-    if (w && h && (this.canvas.width !== w || this.canvas.height !== h)) {
-      this.canvas.width = w;
-      this.canvas.height = h;
-      this.gl.viewport(0, 0, w, h);
-      this.gl.uniform2f(this.resolution, w, h);
-    }
-  }
-
-  render(progress: number) {
-    this.resize();
-    this.gl.uniform1f(this.progress, progress);
-    this.gl.uniform1f(this.time, performance.now() / 1000);
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  }
-
-  play(duration: number) {
-    return new Promise<void>((resolve) => {
-      const start = performance.now();
-      const tick = (now: number) => {
-        const t = Math.min((now - start) / duration, 1);
-        this.render(t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-        if (t < 1) requestAnimationFrame(tick);
-        else resolve();
-      };
-      requestAnimationFrame(tick);
-    });
   }
 }

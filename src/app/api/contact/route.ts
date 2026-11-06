@@ -3,13 +3,31 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// Lo que escribe el visitante va dentro del HTML del correo: se escapa para
+// que no pueda inyectar enlaces o marcado en la bandeja de entrada.
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name, email, service, message } = body;
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const field = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const name = field(body.name);
+  const email = field(body.email);
+  const service = field(body.service);
+  const message = field(body.message);
 
   if (!name || !email || !message) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+  const safe = {
+    name: escapeHtml(name),
+    email: escapeHtml(email),
+    service: escapeHtml(service),
+    message: escapeHtml(message),
+  };
 
   // Sin la API key, `new Resend(undefined)` lanza y el endpoint devolvía un 500
   // opaco. Se comprueba antes para dar un error diagnosticable.
@@ -34,14 +52,14 @@ export async function POST(req: NextRequest) {
         <h2 style="color:#534AB7;margin-bottom:8px;">New project inquiry</h2>
         <p style="color:#666;margin-bottom:24px;font-size:14px;">Submitted via icebreakerlab.vercel.app</p>
         <table style="width:100%;border-collapse:collapse;">
-          <tr><td style="padding:8px 0;color:#999;font-size:13px;width:100px;">Name</td><td style="padding:8px 0;font-weight:600;">${name}</td></tr>
-          <tr><td style="padding:8px 0;color:#999;font-size:13px;">Email</td><td style="padding:8px 0;"><a href="mailto:${email}" style="color:#534AB7;">${email}</a></td></tr>
-          <tr><td style="padding:8px 0;color:#999;font-size:13px;">Service</td><td style="padding:8px 0;">${service || "—"}</td></tr>
+          <tr><td style="padding:8px 0;color:#999;font-size:13px;width:100px;">Name</td><td style="padding:8px 0;font-weight:600;">${safe.name}</td></tr>
+          <tr><td style="padding:8px 0;color:#999;font-size:13px;">Email</td><td style="padding:8px 0;"><a href="mailto:${safe.email}" style="color:#534AB7;">${safe.email}</a></td></tr>
+          <tr><td style="padding:8px 0;color:#999;font-size:13px;">Service</td><td style="padding:8px 0;">${safe.service || "—"}</td></tr>
         </table>
         <div style="margin-top:24px;padding:20px;background:#f8f8ff;border-radius:8px;border-left:3px solid #534AB7;">
-          <p style="margin:0;color:#333;white-space:pre-wrap;font-size:14px;line-height:1.6;">${message}</p>
+          <p style="margin:0;color:#333;white-space:pre-wrap;font-size:14px;line-height:1.6;">${safe.message}</p>
         </div>
-        <p style="margin-top:24px;font-size:12px;color:#999;">Reply directly to this email to respond to ${name}.</p>
+        <p style="margin-top:24px;font-size:12px;color:#999;">Reply directly to this email to respond to ${safe.name}.</p>
       </div>
     `,
   });

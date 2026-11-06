@@ -12,7 +12,9 @@
   height: 100vh;
   height: 100svh;
   overflow: hidden;
-  background: var(--midnight);
+  /* Primer fotograma de fondo: se ve la cueva al instante, sin pantalla de
+     carga, mientras el canvas WebGL prepara la secuencia encima. */
+  background: var(--midnight) url("/frames/ice-cave/color/000.jpg") center / cover no-repeat;
 }
 
 .ic-sequence,
@@ -24,7 +26,11 @@
   height: 100%;
 }
 
-.ic-sequence { display: block; }
+.ic-sequence { display: block; opacity: 0; }
+
+/* El canvas es opaco: se muestra solo cuando ya pintó el primer fotograma,
+   para no tapar el fondo con negro mientras carga. */
+.ic-intro-ready:not(.ic-no-webgl) .ic-sequence { opacity: 1; }
 
 .ic-shade {
   z-index: 1;
@@ -126,7 +132,7 @@
 
 .ic-cta:hover { background: var(--aurora); }
 
-/* La entrada del hero no depende del scroll: arranca al terminar el loader. */
+/* La entrada del hero no depende del scroll: arranca con el primer fotograma. */
 /* Titular del hero: lo posiciona IceCaveScroll encima del celular. */
 .ic-hero-title {
   position: absolute;
@@ -139,6 +145,10 @@
 }
 
 .ic-hero-title .ic-title { align-items: center; }
+
+/* Sin WebGL no hay cámara que seguir: sin celular y con el titular fijo al centro. */
+.ic-no-webgl .ic-phone-wrap { display: none; }
+.ic-no-webgl .ic-hero-title { left: 50%; top: 42%; transform: translate(-50%, -50%); }
 
 /* Halo oscuro detrás del titular: el centro de la cueva es la zona más clara. */
 .ic-hero-title::before {
@@ -163,11 +173,11 @@
 
 .ic-intro-ready .ic-hero-title .ic-word {
   animation: ic-reveal 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(0.8s + var(--word-index) * 0.11s);
+  animation-delay: calc(0.2s + var(--word-index) * 0.11s);
 }
 
 .ic-intro-ready .ic-hero .ic-copy {
-  animation: ic-reveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.65s forwards;
+  animation: ic-reveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.05s forwards;
 }
 
 @keyframes ic-reveal {
@@ -430,77 +440,6 @@
 .ic-phone-caption strong { font-size: 18px; font-weight: 500; }
 .ic-phone-caption small { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ice-tip); }
 
-/* Loader --------------------------------------------------------------- */
-
-/* El Navbar fijo queda por encima del loader a propósito. */
-.ic-loader {
-  position: absolute;
-  z-index: 5;
-  inset: 0;
-  overflow: hidden;
-  color: var(--snow);
-}
-
-.ic-loader--loading,
-.ic-loader--error { background: #609aca; }
-
-.ic-burn {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.ic-loader-ui {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-}
-
-.ic-loader--burning .ic-loader-ui { animation: ic-loader-out 0.35s ease forwards; }
-
-@keyframes ic-loader-out {
-  to { opacity: 0; transform: translateY(10px); }
-}
-
-.ic-counter {
-  position: absolute;
-  left: 28px;
-  bottom: 28px;
-  font-size: 80px;
-  font-weight: 700;
-  line-height: 0.8;
-  letter-spacing: -0.05em;
-  text-shadow: 0 2px 24px rgba(20, 59, 78, 0.45);
-}
-
-.ic-track {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-  background: rgba(31, 72, 91, 0.22);
-}
-
-.ic-bar {
-  width: 100%;
-  height: 100%;
-  background: var(--snow);
-  transform: scaleX(0);
-  transform-origin: left center;
-  will-change: transform;
-}
-
-.ic-loader-error {
-  position: absolute;
-  left: 28px;
-  bottom: 28px;
-  margin: 0;
-  font-size: 18px;
-}
-
 /* Responsive ----------------------------------------------------------- */
 
 @media (max-width: 900px) {
@@ -538,7 +477,6 @@
   .ic-card-blur.left { top: 16%; }
   .ic-card.right,
   .ic-card-blur.right { top: 39%; }
-  .ic-counter { left: 18px; bottom: 22px; font-size: 58px; }
   /* El titular del hero va encima del celular: dos líneas, sin taparlo. */
   .ic-hero-title .ic-title { font-size: clamp(30px, 9vw, 42px); }
   /* El pie de foto chocaría con el titular final. */

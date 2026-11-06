@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import Link from "next/link";
 import {
-  BurnTransition,
   DepthRenderer,
   FrameSequence,
   PixelBlur,
@@ -12,7 +12,7 @@ import {
   type Phase,
 } from "./ice-cave/engine";
 import { ANCHORS } from "./ice-cave/anchors";
-import { FRAME_COUNT } from "./ice-cave/frames";
+import { COLOR_FRAMES, FRAME_COUNT } from "./ice-cave/frames";
 import PhoneShowcase from "./ice-cave/PhoneShowcase";
 import "./ice-cave/ice-cave.css";
 
@@ -21,7 +21,6 @@ import "./ice-cave/ice-cave.css";
 // salen en tramos fijos del progreso (0 → 1).
 const SCROLL_LENGTH_VH = 380;
 const SCROLL_SMOOTHING = 0.09;
-const LOADER_MIN_MS = 1500;
 // El celular reemplaza al logo de la plantilla: mide PHONE_TO_ANCHOR veces el
 // alto que tenía el logo, sin pasar de una fracción del alto de la pantalla.
 const PHONE_TO_ANCHOR = 1.35;
@@ -75,11 +74,10 @@ function Card({ side, title, text }: { side: "left" | "right"; title: string; te
 }
 
 export default function IceCaveScroll() {
+  // El primer fotograma es el fondo del hero (lo pinta el CSS): que llegue cuanto antes.
+  preload(COLOR_FRAMES[0], { as: "image", fetchPriority: "high" });
   const sceneRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const burnRef = useRef<HTMLCanvasElement>(null);
-  const counterRef = useRef<HTMLSpanElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const heroTitleRef = useRef<HTMLDivElement>(null);
   const midRef = useRef<HTMLDivElement>(null);
@@ -87,7 +85,7 @@ export default function IceCaveScroll() {
   const cardBlursRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
-  const [loader, setLoader] = useState<"loading" | "burning" | "done" | "error">("loading");
+  const [noWebgl, setNoWebgl] = useState(false);
   const [introReady, setIntroReady] = useState(false);
   const [phoneSpinning, setPhoneSpinning] = useState(false);
 
@@ -99,8 +97,12 @@ export default function IceCaveScroll() {
     try {
       renderer = new DepthRenderer(canvas, sequence);
     } catch {
-      // Sin WebGL no hay escena; el aviso se agenda fuera del cuerpo del efecto.
-      const id = requestAnimationFrame(() => setLoader("error"));
+      // Sin WebGL queda el primer fotograma fijo con los textos encima; el
+      // cambio de estado se agenda fuera del cuerpo del efecto.
+      const id = requestAnimationFrame(() => {
+        setNoWebgl(true);
+        setIntroReady(true);
+      });
       return () => cancelAnimationFrame(id);
     }
     const blur = new PixelBlur(canvas, scene);
@@ -200,50 +202,24 @@ export default function IceCaveScroll() {
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onPointerLeave);
 
+    // Sin pantalla de carga: el CSS ya muestra el primer fotograma y la escena
+    // arranca en cuanto ese fotograma está listo en WebGL.
     const intro = async () => {
-      const start = performance.now();
-      let ready = false;
-      const firstFrame = sequence.start().then(() => {
-        ready = true;
-        renderer.resize();
-        renderer.render(0);
-      });
-
-      // El contador no pasa de 99 hasta que el primer fotograma está listo.
-      await new Promise<void>((resolve) => {
-        const tick = (now: number) => {
-          if (cancelled) return resolve();
-          const elapsed = now - start;
-          const pct = Math.floor(Math.min(elapsed / LOADER_MIN_MS, ready ? 1 : 0.99) * 100);
-          if (counterRef.current) counterRef.current.textContent = String(pct);
-          if (barRef.current) barRef.current.style.transform = `scaleX(${pct / 100})`;
-          if (elapsed >= LOADER_MIN_MS && ready) return resolve();
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      });
-      await firstFrame;
+      await sequence.start();
       if (cancelled) return;
-
-      setLoader("burning");
-      let burn: Promise<void> = Promise.resolve();
-      try {
-        if (!reducedMotion && burnRef.current) burn = new BurnTransition(burnRef.current).play(1150);
-      } catch {
-        // Sin WebGL para la transición: el loader simplemente desaparece.
-      }
-      await new Promise((r) => setTimeout(r, reducedMotion ? 0 : 760));
-      if (cancelled) return;
+      renderer.resize();
+      renderer.render(0);
       setIntroReady(true);
-      await burn;
-      if (cancelled) return;
-      setLoader("done");
       measure();
       progress = target;
       loop();
     };
 
-    intro().catch(() => !cancelled && setLoader("error"));
+    intro().catch(() => {
+      if (cancelled) return;
+      setNoWebgl(true);
+      setIntroReady(true);
+    });
 
     return () => {
       cancelled = true;
@@ -258,7 +234,7 @@ export default function IceCaveScroll() {
   return (
     <section
       ref={sceneRef}
-      className={`ic-scene${introReady ? " ic-intro-ready" : ""}`}
+      className={`ic-scene${introReady ? " ic-intro-ready" : ""}${noWebgl ? " ic-no-webgl" : ""}`}
       style={{ height: `${SCROLL_LENGTH_VH}vh` }}
       aria-label="Breaking through the ice"
     >
@@ -311,25 +287,6 @@ export default function IceCaveScroll() {
           </div>
         </div>
 
-        {loader !== "done" && (
-          <div className={`ic-loader ic-loader--${loader}`} role="status" aria-live="polite">
-            <canvas ref={burnRef} className="ic-burn" />
-            <div className="ic-loader-ui">
-              {loader === "error" ? (
-                <p className="ic-loader-error">Unable to load the scene.</p>
-              ) : (
-                <>
-                  <div className="ic-counter">
-                    <span ref={counterRef}>0</span>%
-                  </div>
-                  <div className="ic-track">
-                    <div ref={barRef} className="ic-bar" />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
